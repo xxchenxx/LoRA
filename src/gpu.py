@@ -51,6 +51,7 @@ def parse_gpu(args):
     os.environ['MASTER_ADDR'] = '127.0.0.1'
     os.environ['MASTER_PORT'] = '29500'
     local_rank = args.local_rank 
+    print(local_rank)
     torch.cuda.set_device(local_rank)
     world_size = torch.cuda.device_count()
     dist.init_process_group(
