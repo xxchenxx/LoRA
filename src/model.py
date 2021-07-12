@@ -252,6 +252,7 @@ class Attention(nn.Module):
 
         ## gate
         a = a.transpose(1, 0)
+        print(a.shape)
         a = a * self.gate
         a = a.transpose(1, 0)
         a = self.merge_heads(a)
