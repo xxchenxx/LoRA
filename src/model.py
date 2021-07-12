@@ -248,7 +248,7 @@ class Attention(nn.Module):
 
         present = torch.stack((key.transpose(-2, -1), value))  # transpose to have same shapes for stacking
         a = self._attn(query, key, value, len_kv = len_kv)
-        print(a.shape)
+        #print(a.shape)
 
         ## gate
         a = a.transpose(1, 0)
