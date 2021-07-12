@@ -83,7 +83,7 @@ class Attention(nn.Module):
         assert n_state % config.n_head == 0
         self.register_buffer("bias", torch.tril(torch.ones(n_ctx, n_ctx)).view(1, 1, n_ctx, n_ctx))
 
-        self.register_buffer("gate", torch.ones(config.n_head))
+        self.register_parameter("gate", torch.ones(config.n_head))
 
         self.n_head = config.n_head
         self.split_size = n_state
