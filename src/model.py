@@ -129,14 +129,15 @@ class Attention(nn.Module):
     def _attn(self, q, k, v, len_kv = None):
         print(q.shape)
         print(k.shape)
-        assert False
+        
         w = torch.matmul(q, k)
+        print(w.shape)
         if self.scale:
             w = w / math.sqrt(v.size(-1))
         nd, ns = w.size(-2), w.size(-1)
         b = self.bias[:, :, ns-nd:ns, :ns]
         w = w * b - 1e10 * (1 - b)
-
+        print(w.shape)
         # q : (batch, head, q_seq_length, head_features)
         # k : (batch, head, head_features, kv_seq_length)
         # w : (batch, head, q_seq_length, kv_seq_length)
@@ -147,6 +148,7 @@ class Attention(nn.Module):
             w = w.masked_fill(_input_msk.unsqueeze(1).unsqueeze(2), -1.0e10) 
 
         w = nn.Softmax(dim=-1)(w)
+        print(w.shape)
         return torch.matmul(w, v)
 
     def merge_heads(self, x):
@@ -243,6 +245,8 @@ class Attention(nn.Module):
 
         present = torch.stack((key.transpose(-2, -1), value))  # transpose to have same shapes for stacking
         a = self._attn(query, key, value, len_kv = len_kv)
+        print(a.shape)
+        assert False
         a = self.merge_heads(a)
         a = self.c_proj(a)
         return a, present
