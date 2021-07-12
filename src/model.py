@@ -251,9 +251,9 @@ class Attention(nn.Module):
         #print(a.shape)
 
         ## gate
-        a = a.transpose(1, 0, 2)
+        a = a.transpose(1, 0)
         a = a * self.gate
-        a = a.transpose(1, 0, 2)
+        a = a.transpose(1, 0)
         a = self.merge_heads(a)
         a = self.c_proj(a)
         return a, present
