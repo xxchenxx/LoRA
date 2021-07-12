@@ -246,8 +246,11 @@ class Attention(nn.Module):
         present = torch.stack((key.transpose(-2, -1), value))  # transpose to have same shapes for stacking
         a = self._attn(query, key, value, len_kv = len_kv)
         print(a.shape)
-        assert False
+        
         a = self.merge_heads(a)
+        print(a.shape)
+
+        assert False
         a = self.c_proj(a)
         return a, present
 
