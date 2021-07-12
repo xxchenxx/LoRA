@@ -82,6 +82,9 @@ class Attention(nn.Module):
         
         assert n_state % config.n_head == 0
         self.register_buffer("bias", torch.tril(torch.ones(n_ctx, n_ctx)).view(1, 1, n_ctx, n_ctx))
+
+        self.register_buffer("gate", torch.ones(config.n_head))
+
         self.n_head = config.n_head
         self.split_size = n_state
         self.scale = scale
@@ -127,17 +130,17 @@ class Attention(nn.Module):
                 nn.init.normal_(self.v_moe_adapter1.weight, std=0.02)
 
     def _attn(self, q, k, v, len_kv = None):
-        print(q.shape)
-        print(k.shape)
+        #print(q.shape)
+        #print(k.shape)
         
         w = torch.matmul(q, k)
-        print(w.shape)
+        #print(w.shape)
         if self.scale:
             w = w / math.sqrt(v.size(-1))
         nd, ns = w.size(-2), w.size(-1)
         b = self.bias[:, :, ns-nd:ns, :ns]
         w = w * b - 1e10 * (1 - b)
-        print(w.shape)
+        #print(w.shape)
         # q : (batch, head, q_seq_length, head_features)
         # k : (batch, head, head_features, kv_seq_length)
         # w : (batch, head, q_seq_length, kv_seq_length)
@@ -148,7 +151,7 @@ class Attention(nn.Module):
             w = w.masked_fill(_input_msk.unsqueeze(1).unsqueeze(2), -1.0e10) 
 
         w = nn.Softmax(dim=-1)(w)
-        print(w.shape)
+        #print(w.shape)
         return torch.matmul(w, v)
 
     def merge_heads(self, x):
@@ -245,14 +248,17 @@ class Attention(nn.Module):
 
         present = torch.stack((key.transpose(-2, -1), value))  # transpose to have same shapes for stacking
         a = self._attn(query, key, value, len_kv = len_kv)
-        print(a.shape)
-        
-        a = self.merge_heads(a)
-        print(a.shape)
+        #print(a.shape)
 
+        ## gate
+        a = a.transpose(1, 0, 2)
+        a = a * self.gate
+        a = a.transpose(1, 0, 2)
+        a = self.merge_heads(a)
+    
         
         a = self.c_proj(a)
-        print(a.shape)
+        #print(a.shape)
 
         assert False
         return a, present

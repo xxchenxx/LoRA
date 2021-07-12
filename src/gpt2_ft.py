@@ -264,22 +264,23 @@ if __name__ == '__main__':
 
   lm_net = lm_net.cuda()
 
-  if args.lora_dim == 0:
-    optimizer = create_adam_optimizer_from_args(lm_net, args)
-    # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
-  else:
-    for n, p in lm_net.named_parameters():
-      if 'adapter' in n:
+
+  assert args.lora_dim == 0
+
+
+  for n, p in lm_net.named_parameters():
+      if 'gate' in n:
         print(f'{n}, shape: {p.shape}')
       else:
         p.requires_grad = False
 
-    optimizer_grouped_parameters = [
-        {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
-        }
-    ]
-    optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
+  optimizer_grouped_parameters = [
+      {
+          "params": [p for n, p in lm_net.named_parameters() if 'gate' in n],
+      }
+  ]
+  optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
+    
     #None, args.lr, args.weight_decay, optimizer_grouped_parameters=optimizer_grouped_parameters, correct_bias=True, adam_epislon=1.0e-6)
 
   if args.max_step is None:
