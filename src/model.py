@@ -127,6 +127,9 @@ class Attention(nn.Module):
                 nn.init.normal_(self.v_moe_adapter1.weight, std=0.02)
 
     def _attn(self, q, k, v, len_kv = None):
+        print(q.shape)
+        print(k.shape)
+        assert False
         w = torch.matmul(q, k)
         if self.scale:
             w = w / math.sqrt(v.size(-1))
