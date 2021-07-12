@@ -250,8 +250,11 @@ class Attention(nn.Module):
         a = self.merge_heads(a)
         print(a.shape)
 
-        assert False
+        
         a = self.c_proj(a)
+        print(a.shape)
+
+        assert False
         return a, present
 
 # sequence attention, considering relative position.
