@@ -269,7 +269,6 @@ if __name__ == '__main__':
 
 
   for n, p in lm_net.named_parameters():
-      print(n)
       if 'gate' in n or 'wte' in n:
         print(f'{n}, shape: {p.shape}')
       else:
