@@ -269,14 +269,14 @@ if __name__ == '__main__':
 
 
   for n, p in lm_net.named_parameters():
-      if 'gate' in n:
+      if 'gate' in n or 'lm_head' in n:
         print(f'{n}, shape: {p.shape}')
       else:
         p.requires_grad = False
 
   optimizer_grouped_parameters = [
       {
-          "params": [p for n, p in lm_net.named_parameters() if 'gate' in n],
+          "params": [p for n, p in lm_net.named_parameters() if 'gate' in n or 'lm_head' in n],
       }
   ]
   optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
