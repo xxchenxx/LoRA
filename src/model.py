@@ -645,7 +645,7 @@ class GPT2Model(nn.Module):
     #    self.decoder = nn.Linear(embed_shape[1], embed_shape[0], bias=False)
     #    self.decoder.weight = model_embeddings_weights  # Tied weights
 
-    def forward(self, input_ids, position_ids=None, token_type_ids=None, past=None, len_past = None):
+    def forward(self, input_ids, position_ids=None, token_type_ids=None, past=None, len_past = None,start_layer = -1):
         if past is None:
             past_length = 0
             past = [None] * len(self.h)
@@ -703,9 +703,17 @@ class GPT2Model(nn.Module):
             token_type_embeds = 0
         hidden_states = inputs_embeds + position_embeds + token_type_embeds
         presents = []
+        i = 0
         for block, layer_past in zip(self.h, past):
-            hidden_states, present = block(hidden_states, layer_past = layer_past, len_past=len_past)
-            presents.append(present)
+            if i > start_layer:
+                block.train()
+                hidden_states, present = block(hidden_states, layer_past = layer_past, len_past=len_past)
+                presents.append(present)
+            else:
+                block.eval()
+                with torch.no_grad():
+                    hidden_states, present = block(hidden_states, layer_past = layer_past, len_past=len_past)
+                    presents.append(present)
         hidden_states = self.ln_f(hidden_states)
         output_shape = input_shape + (hidden_states.size(-1),)
         return hidden_states.view(*output_shape), presents

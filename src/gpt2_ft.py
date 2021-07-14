@@ -105,13 +105,19 @@ class AverageMeter(object):
     self.count += n
     self.avg = self.sum / self.count
 
-def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True):
+def optimizer_step(_loss, _optimizer, _model, _schedule, args, grad_tensor_dict, is_update = True):
   if args.fp16:
     with amp.scale_loss(_loss, _optimizer) as _scaled_loss:
       _scaled_loss.backward()
   else:
     _loss.backward()
 
+  for name, param in _model.transformer.named_parameters():
+    if param.grad is not None:
+        if name not in grad_tensor_dict.keys():
+            grad_tensor_dict[name] = param.grad
+        else:
+            grad_tensor_dict[name] += param.grad
   if is_update:
     if args.clip > 0:
       if args.fp16:
@@ -124,6 +130,8 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True)
 
   if _schedule is not None:
     _schedule.step()
+  
+  return grad_tensor_dict
 
 def evaluate(model, valid_loader, args):
   model.eval()
@@ -153,13 +161,15 @@ def evaluate(model, valid_loader, args):
   return avg_lm_loss.avg, math.exp(avg_lm_loss.avg)
 
 
-def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args, train_step = 0, epoch = 0):
+def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args, prev_intermediate_grad_dict, train_step = 0, epoch = 0, start_layer = -1):
   model.train()
   avg_lm_loss = AverageMeter()
   print('start to train the model................', epoch)
   log_start_time = time.time()
   best_val_ppl = None
-
+  grad_tensor_dict = {}
+  for name, param in model.transformer.named_parameters():
+    grad_tensor_dict[name] = torch.zeros(param.shape).to(args.local_rank)
   train_loader.sampler.set_epoch(epoch)
 
   for idx, data in enumerate(train_loader):
@@ -169,15 +179,19 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     _target = data['target'].to(args.device)
     _msk = data['mask'].to(args.device)
 
-    _lm_logits, _lm_loss = model(_input, lm_labels=_target, lm_mask=_msk, label_smooth=args.label_smooth) 
+    _lm_logits, _lm_loss = model(_input, lm_labels=_target, lm_mask=_msk, label_smooth=args.label_smooth, start_layer = start_layer) 
 
     _lm_loss = _lm_loss.mean() 
 
     train_step += 1
     is_update = True if train_step % args.grad_acc == 0 else False
     avg_lm_loss.update(_lm_loss.item())
-    optimizer_step(_lm_loss/(args.grad_acc), optimizer, model, scheduler, args, is_update=is_update)
-    
+    grad_tensor_dict = optimizer_step(_lm_loss/(args.grad_acc), optimizer, model, scheduler, args, grad_tensor_dict, is_update=is_update)
+    current_grad_dict = {}
+    eval_step = 0
+    for i in range(24):
+      current_grad_dict[i] = 0
+
     if train_step % args.log_interval == 0: 
       elapsed = time.time() - log_start_time
 
@@ -216,6 +230,41 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         print('-' * 100)
         print(log_str)
         print('-' * 100)
+      for name in grad_tensor_dict.keys():
+        param_list = name.split(".")
+        layer_num = 0
+        for split_param in param_list:
+            try:
+                layer_num = int(split_param)
+                if "transformer" in name:
+                    current_grad_dict[layer_num] += torch.norm(grad_tensor_dict[name].cpu().detach(), p=1).item() 
+            except ValueError:
+                pass
+        grad_tensor_dict = {}
+        for name, param in model.bert.named_parameters():
+          grad_tensor_dict[name] = torch.zeros(param.shape).to(args.local_rank)
+
+        if prev_intermediate_grad_dict is None:
+          # Set gradient dict to be compared with for the first time
+          prev_intermediate_grad_dict = current_grad_dict
+        else:
+          threshold_dict = {}
+          for key in range(24):
+              threshold_dict[key] = 0
+          # Calculate gradient changing threshold
+          for key in current_grad_dict.keys() :
+              if current_grad_dict[key] > 0:
+                  threshold_dict[key] = abs(prev_intermediate_grad_dict[key] - current_grad_dict[key]) / prev_intermediate_grad_dict[key]    
+              
+          median_value = np.percentile(list(threshold_dict.values())[start_layer:], 0.05)   
+          # Find out the first layer with ratio ge to the median value      
+          for key in threshold_dict.keys():
+              if threshold_dict[key] >= median_value:
+                  start_layer = key
+                  break
+          prev_intermediate_grad_dict = current_grad_dict
+          print("threshold: ", threshold_dict)
+          print("layer num: ", start_layer)
 
       model.train()
       distributed_sync(args)
@@ -228,7 +277,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     print('saving checkpoint', model_path)
     torch.save({'model_state_dict': model.state_dict()}, model_path) 
   distributed_sync(args)
-  return train_step
+  return train_step, prev_intermediate_grad_dict, start_layer
 if __name__ == '__main__':
   args = parser.parse_args()
   parse_gpu(args)
@@ -293,9 +342,10 @@ if __name__ == '__main__':
 
   try:
     train_step = 0
+    start_layer = 0
     for epoch in itertools.count(start=1):
       #def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
-      train_step = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, train_step=train_step, epoch = epoch)
+      train_step, prev_intermediate_grad_dict, start_layer = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, prev_intermediate_grad_dict, train_step=train_step, epoch = epoch, start_layer=start_layer)
       
       if train_step >= args.max_step or (args.max_epoch is not None and epoch >= args.max_epoch):
         if args.rank == 0:
