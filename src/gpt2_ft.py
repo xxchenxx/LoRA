@@ -239,12 +239,12 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
       for name in grad_tensor_dict.keys():
         param_list = name.split(".")
         layer_num = 0
-        print(param_list)
         for split_param in param_list:
             try:
                 layer_num = int(split_param)
                 print(layer_num)
                 if "h" in name:
+                  print(name)
                   print(grad_tensor_dict[name].cpu().detach().abs().mean())
                   print(torch.norm(grad_tensor_dict[name].cpu().detach(), p=1).item() )
                   current_grad_dict[layer_num] += torch.norm(grad_tensor_dict[name].cpu().detach(), p=1).item() 
