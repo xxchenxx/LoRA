@@ -240,7 +240,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
             except ValueError:
                 pass
         grad_tensor_dict = {}
-        for name, param in model.bert.named_parameters():
+        for name, param in model.module.transformer.named_parameters():
           grad_tensor_dict[name] = torch.zeros(param.shape).to(args.local_rank)
 
         if prev_intermediate_grad_dict is None:
