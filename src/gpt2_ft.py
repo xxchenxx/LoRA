@@ -187,6 +187,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     is_update = True if train_step % args.grad_acc == 0 else False
     avg_lm_loss.update(_lm_loss.item())
     grad_tensor_dict = optimizer_step(_lm_loss/(args.grad_acc), optimizer, model, scheduler, args, grad_tensor_dict, is_update=is_update)
+    print(grad_tensor_dict)
     current_grad_dict = {}
     for i in range(24):
       current_grad_dict[i] = 0
