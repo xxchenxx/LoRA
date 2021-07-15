@@ -241,6 +241,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
                 layer_num = int(split_param)
                 print(layer_num)
                 if "h" in name:
+                  print(grad_tensor_dict[name].cpu().detach())
                   print(torch.norm(grad_tensor_dict[name].cpu().detach(), p=1).item() )
                   current_grad_dict[layer_num] += torch.norm(grad_tensor_dict[name].cpu().detach(), p=1).item() 
             except ValueError:
