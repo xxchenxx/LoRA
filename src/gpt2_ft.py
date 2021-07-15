@@ -236,7 +236,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         for split_param in param_list:
             try:
                 layer_num = int(split_param)
-                if "transformer" in name:
+                if "h" in name:
                     current_grad_dict[layer_num] += torch.norm(grad_tensor_dict[name].cpu().detach(), p=1).item() 
             except ValueError:
                 pass
