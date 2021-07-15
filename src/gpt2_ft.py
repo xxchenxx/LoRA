@@ -232,6 +232,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
       for name in grad_tensor_dict.keys():
         param_list = name.split(".")
         layer_num = 0
+        print(param_list)
         for split_param in param_list:
             try:
                 layer_num = int(split_param)
