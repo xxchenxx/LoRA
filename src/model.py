@@ -705,7 +705,7 @@ class GPT2Model(nn.Module):
         presents = []
         i = 0
         for block, layer_past in zip(self.h, past):
-            if i > start_layer:
+            if i >= start_layer:
                 block.train()
                 hidden_states, present = block(hidden_states, layer_past = layer_past, len_past=len_past)
                 presents.append(present)

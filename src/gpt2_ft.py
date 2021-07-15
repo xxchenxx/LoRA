@@ -112,7 +112,7 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, grad_tensor_dict,
   else:
     _loss.backward()
 
-  for name, param in _model.transformer.named_parameters():
+  for name, param in _model.module.transformer.named_parameters():
     if param.grad is not None:
         if name not in grad_tensor_dict.keys():
             grad_tensor_dict[name] = param.grad
