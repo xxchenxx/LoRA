@@ -168,7 +168,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
   log_start_time = time.time()
   best_val_ppl = None
   grad_tensor_dict = {}
-  for name, param in model.transformer.named_parameters():
+  for name, param in model.modules.transformer.named_parameters():
     grad_tensor_dict[name] = torch.zeros(param.shape).to(args.local_rank)
   train_loader.sampler.set_epoch(epoch)
 
@@ -188,7 +188,6 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     avg_lm_loss.update(_lm_loss.item())
     grad_tensor_dict = optimizer_step(_lm_loss/(args.grad_acc), optimizer, model, scheduler, args, grad_tensor_dict, is_update=is_update)
     current_grad_dict = {}
-    eval_step = 0
     for i in range(24):
       current_grad_dict[i] = 0
 
