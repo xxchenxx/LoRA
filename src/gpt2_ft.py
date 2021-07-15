@@ -249,27 +249,27 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         for name, param in model.module.transformer.named_parameters():
           grad_tensor_dict[name] = torch.zeros(param.shape).to(args.local_rank)
 
-        if prev_intermediate_grad_dict is None:
-          # Set gradient dict to be compared with for the first time
-          prev_intermediate_grad_dict = current_grad_dict
-        else:
-          threshold_dict = {}
-          for key in range(24):
-              threshold_dict[key] = 0
-          # Calculate gradient changing threshold
-          for key in current_grad_dict.keys() :
-              if current_grad_dict[key] > 0:
-                  threshold_dict[key] = abs(prev_intermediate_grad_dict[key] - current_grad_dict[key]) / prev_intermediate_grad_dict[key]    
-              
-          median_value = np.percentile(list(threshold_dict.values())[start_layer:], 0.05)   
-          # Find out the first layer with ratio ge to the median value      
-          for key in threshold_dict.keys():
-              if threshold_dict[key] >= median_value:
-                  start_layer = key
-                  break
-          prev_intermediate_grad_dict = current_grad_dict
-          print("threshold: ", threshold_dict)
-          print("layer num: ", start_layer)
+      if prev_intermediate_grad_dict is None:
+        # Set gradient dict to be compared with for the first time
+        prev_intermediate_grad_dict = current_grad_dict
+      else:
+        threshold_dict = {}
+        for key in range(24):
+            threshold_dict[key] = 0
+        # Calculate gradient changing threshold
+        for key in current_grad_dict.keys() :
+            if current_grad_dict[key] > 0:
+                threshold_dict[key] = abs(prev_intermediate_grad_dict[key] - current_grad_dict[key]) / prev_intermediate_grad_dict[key]    
+            
+        median_value = np.percentile(list(threshold_dict.values())[start_layer:], 0.05)   
+        # Find out the first layer with ratio ge to the median value      
+        for key in threshold_dict.keys():
+            if threshold_dict[key] >= median_value:
+                start_layer = key
+                break
+        prev_intermediate_grad_dict = current_grad_dict
+        print("threshold: ", threshold_dict)
+        print("layer num: ", start_layer)
 
       model.train()
       distributed_sync(args)
