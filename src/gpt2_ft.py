@@ -231,9 +231,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         print(log_str)
         print('-' * 100)
       '''
-      print(grad_tensor_dict)
-      for name in grad_tensor_dict.keys():
-        print(name, grad_tensor_dict[name].cpu().detach().abs().mean())
+
 
 
       for name in grad_tensor_dict.keys():
@@ -242,15 +240,11 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         for split_param in param_list:
             try:
                 layer_num = int(split_param)
-                print(layer_num)
                 if "h" in name:
-                  print(name)
-                  print(grad_tensor_dict[name].cpu().detach().abs().mean())
-                  print(torch.norm(grad_tensor_dict[name].cpu().detach(), p=1).item() )
                   current_grad_dict[layer_num] += torch.norm(grad_tensor_dict[name].cpu().detach(), p=1).item() 
             except ValueError:
                 pass
-              
+
       grad_tensor_dict = {}
       for name, param in model.module.transformer.named_parameters():
         grad_tensor_dict[name] = torch.zeros(param.shape).to(args.local_rank)
