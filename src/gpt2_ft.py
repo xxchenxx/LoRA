@@ -215,7 +215,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     # evaluation interval
     if train_step % args.eval_interval == 0:
       eval_start_time = time.time()
-      '''
+      
       valid_loss, valid_ppl = evaluate(model, valid_loader, args)
 
       if best_val_ppl is None or valid_ppl < best_val_ppl:
@@ -230,7 +230,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         print('-' * 100)
         print(log_str)
         print('-' * 100)
-      '''
+      
 
 
 
