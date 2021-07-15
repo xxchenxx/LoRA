@@ -261,7 +261,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
             if current_grad_dict[key] > 0:
                 threshold_dict[key] = abs(prev_intermediate_grad_dict[key] - current_grad_dict[key]) / prev_intermediate_grad_dict[key]    
             
-        median_value = np.percentile(list(threshold_dict.values())[start_layer:], 0.05)   
+        median_value = np.percentile(list(threshold_dict.values())[start_layer:], 50)   
         # Find out the first layer with ratio ge to the median value      
         for key in threshold_dict.keys():
             if threshold_dict[key] >= median_value:
