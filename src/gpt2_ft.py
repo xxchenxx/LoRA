@@ -233,7 +233,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
       '''
       print(grad_tensor_dict)
       for name in grad_tensor_dict.keys():
-        print(grad_tensor_dict[name].cpu().detach().abs().mean())
+        print(name, grad_tensor_dict[name].cpu().detach().abs().mean())
 
 
       for name in grad_tensor_dict.keys():
