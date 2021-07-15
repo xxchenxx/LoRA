@@ -829,10 +829,10 @@ class GPT2LMModel(nn.Module):
 
     # input_ids, lm_labels=pred_ids)
     def forward(self, input_ids, lm_labels=None, lm_mask=None, past=None, len_past=None, label_smooth=0.0, is_meta_index=False, meta_cls_index=None, 
-                is_report_accuracy=False):
+                is_report_accuracy=False, start_layer = 0):
         _batch, _len = input_ids.shape
         #print(input_ids)
-        hidden_states, presents = self.transformer(input_ids, past=past, len_past=len_past) #, position_ids, token_type_ids, past=past, len_past=len_past)
+        hidden_states, presents = self.transformer(input_ids, past=past, len_past=len_past, start_layer=start_layer) #, position_ids, token_type_ids, past=past, len_past=len_past)
         
 
         #if hidden_states.device.index == 0:
