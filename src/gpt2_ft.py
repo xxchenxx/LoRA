@@ -250,9 +250,10 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
                   current_grad_dict[layer_num] += torch.norm(grad_tensor_dict[name].cpu().detach(), p=1).item() 
             except ValueError:
                 pass
-        grad_tensor_dict = {}
-        for name, param in model.module.transformer.named_parameters():
-          grad_tensor_dict[name] = torch.zeros(param.shape).to(args.local_rank)
+              
+      grad_tensor_dict = {}
+      for name, param in model.module.transformer.named_parameters():
+        grad_tensor_dict[name] = torch.zeros(param.shape).to(args.local_rank)
 
       if prev_intermediate_grad_dict is None:
         # Set gradient dict to be compared with for the first time
