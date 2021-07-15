@@ -187,7 +187,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     is_update = True if train_step % args.grad_acc == 0 else False
     avg_lm_loss.update(_lm_loss.item())
     grad_tensor_dict = optimizer_step(_lm_loss/(args.grad_acc), optimizer, model, scheduler, args, grad_tensor_dict, is_update=is_update)
-    print(grad_tensor_dict)
+
     current_grad_dict = {}
     for i in range(24):
       current_grad_dict[i] = 0
@@ -216,7 +216,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     if train_step % args.eval_interval == 0:
       eval_start_time = time.time()
 
-      valid_loss, valid_ppl = evaluate(model, valid_loader, args)
+      #valid_loss, valid_ppl = evaluate(model, valid_loader, args)
 
       if best_val_ppl is None or valid_ppl < best_val_ppl:
         best_val_ppl = valid_ppl
@@ -230,6 +230,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         print('-' * 100)
         print(log_str)
         print('-' * 100)
+      print(grad_tensor_dict)
       for name in grad_tensor_dict.keys():
         param_list = name.split(".")
         layer_num = 0
