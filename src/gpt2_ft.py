@@ -161,7 +161,7 @@ def evaluate(model, valid_loader, args):
   return avg_lm_loss.avg, math.exp(avg_lm_loss.avg)
 
 
-def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args, prev_intermediate_grad_dict, train_step = 0, epoch = 0, start_layer = -1):
+def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args, prev_intermediate_grad_dict, train_step = 0, epoch = 0, start_layer = -1, config=None):
   model.train()
   avg_lm_loss = AverageMeter()
   print('start to train the model................', epoch)
@@ -272,6 +272,16 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         print("threshold: ", threshold_dict)
         print("layer num: ", start_layer)
 
+        if start_layer > 0:
+          model = GPT2LMModel(config)
+  
+          print('loading model pretrained weight.')
+          model.load_weight(torch.load(model_path)['model_state_dict'])  
+          model = model.cuda()
+          optimizer = create_adam_optimizer_from_args(model, args)
+          model, optimizer = distributed_opt(args, model, optimizer, grad_acc=args.grad_acc)
+        else:
+          pass
       model.train()
       distributed_sync(args)
 
@@ -283,7 +293,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     print('saving checkpoint', model_path)
     torch.save({'model_state_dict': model.state_dict()}, model_path) 
   distributed_sync(args)
-  return train_step, prev_intermediate_grad_dict, start_layer
+  return train_step, prev_intermediate_grad_dict, start_layer, model, optimizer
 if __name__ == '__main__':
   args = parser.parse_args()
   parse_gpu(args)
@@ -352,7 +362,7 @@ if __name__ == '__main__':
     prev_intermediate_grad_dict = None
     for epoch in itertools.count(start=1):
       #def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
-      train_step, prev_intermediate_grad_dict, start_layer = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, prev_intermediate_grad_dict, train_step=train_step, epoch = epoch, start_layer=start_layer)
+      train_step, prev_intermediate_grad_dict, start_layer, model, optimizer = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, prev_intermediate_grad_dict, train_step=train_step, epoch = epoch, start_layer=start_layer, config=config)
       
       if train_step >= args.max_step or (args.max_epoch is not None and epoch >= args.max_epoch):
         if args.rank == 0:
