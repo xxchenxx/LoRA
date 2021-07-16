@@ -704,7 +704,6 @@ class GPT2Model(nn.Module):
         hidden_states = inputs_embeds + position_embeds + token_type_embeds
         presents = []
         i = 0
-        print(start_layer)
         for block, layer_past in zip(self.h, past):
             if i >= start_layer:
                 block.train()
