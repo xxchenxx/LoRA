@@ -714,6 +714,7 @@ class GPT2Model(nn.Module):
                 with torch.no_grad():
                     hidden_states, present = block(hidden_states, layer_past = layer_past, len_past=len_past)
                     presents.append(present)
+            i = i + 1
         hidden_states = self.ln_f(hidden_states)
         output_shape = input_shape + (hidden_states.size(-1),)
         return hidden_states.view(*output_shape), presents
