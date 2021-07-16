@@ -279,7 +279,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
           model.load_weight(torch.load(model_path)['model_state_dict'])  
           model = model.cuda()
           optimizer = create_adam_optimizer_from_args(model, args)
-          model, optimizer = distributed_opt(args, model, optimizer, grad_acc=args.grad_acc)
+          model, optimizer = distributed_opt(args, model, optimizer, grad_acc=args.grad_acc, find_unused_parameters=True)
         else:
           pass
       model.train()

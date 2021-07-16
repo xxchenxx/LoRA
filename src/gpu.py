@@ -19,13 +19,13 @@ def add_gpu_params(parser: argparse.ArgumentParser):
   parser.add_argument("--world_size", default=0, type=int, help='world size')
   parser.add_argument("--random_seed", default=10, type=int, help='random seed')
 
-def distributed_opt(args, model, opt, grad_acc=1):
+def distributed_opt(args, model, opt, grad_acc=1, find_unused_parameters=False):
   if args.platform == 'azure':
     args.hvd.broadcast_parameters(model.state_dict(), root_rank=0)
     opt = args.hvd.DistributedOptimizer(opt, named_parameters=model.named_parameters(), backward_passes_per_step=grad_acc)
   elif args.platform == 'philly' or args.platform == 'k8s' or args.platform == 'local':
     model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank], output_device=args.local_rank, 
-                                                      find_unused_parameters=False, broadcast_buffers=False)
+                                                      find_unused_parameters=find_unused_parameters, broadcast_buffers=False)
   return model, opt
 
 
