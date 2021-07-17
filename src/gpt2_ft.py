@@ -358,7 +358,7 @@ if __name__ == '__main__':
 
   try:
     train_step = 0
-    start_layer = 12
+    start_layer = 0
     prev_intermediate_grad_dict = None
     for epoch in itertools.count(start=1):
       #def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
