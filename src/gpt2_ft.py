@@ -440,6 +440,7 @@ if __name__ == '__main__':
 		sparsity_pen = args.sparsity_penalty_per_layer
 		assert len(sparsity_pen) == total_layers,  "invalid sparsity penalty per layer: # of layers mismatch"
 	def get_layer_ind(n):
+		print(n)
 		if "transformer" in n:
 			ind = int(n.split(".")[2])
 		else:
