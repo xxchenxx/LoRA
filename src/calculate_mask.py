@@ -180,7 +180,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
 					muti_head_dim = m.split_size
 					atten_dim = muti_head_dim * m.n_head
 					attn_mask_name = name + '.c_attn.weight_mask'
-					atten_mask[attn_mask_name] = torch.zeros_like(m.qkv.weight)
+					atten_mask[attn_mask_name] = torch.zeros_like(m.c_attn.weight)
 					remain_indicator = torch.argsort(m.grad_scores)[-remain_heads:]
 
 					for index_inside_layer in remain_indicator:
