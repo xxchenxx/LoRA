@@ -296,7 +296,7 @@ if __name__ == '__main__':
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
   mask = torch.load("mask_0.5.pth.tar", map_location="cpu")
   for m in mask:
-      m = m.to(args.local_rank)
+      mask[m] = mask[m].to(args.local_rank)
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
