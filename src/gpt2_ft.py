@@ -99,6 +99,13 @@ parser.add_argument(
         type=float,
         help="Sparsity penalty.",
     )
+parser.add_argument(
+        "--sparsity_penalty_per_layer",
+        default=None,
+        type=float,
+        nargs="+",
+        help="Sparsity penalty per layer.",
+    )
 parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
 # influence model, calculate the influence score between two samples.
 def print_args(args):
