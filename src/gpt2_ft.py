@@ -80,7 +80,26 @@ parser.add_argument('--eval_epoch', type=int, default=1, help='eval per number o
 
 parser.add_argument('--alpha_init', type=int, default=5)
 parser.add_argument('--per-params-alpha', type=int, default=1)
+parser.add_argument(
+        "--concrete_lower",
+        default=-1.5,
+        type=float,
+        help="Temperature.",
+    )
 
+parser.add_argument(
+        "--concrete_upper",
+        default=1.5,
+        type=float,
+        help="Temperature.",
+    )
+parser.add_argument(
+        "--sparsity_pen",
+        default=0.000000125,
+        type=float,
+        help="Sparsity penalty.",
+    )
+parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
 # influence model, calculate the influence score between two samples.
 def print_args(args):
 	if args.rank == 0:
