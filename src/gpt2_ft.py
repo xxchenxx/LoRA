@@ -442,9 +442,10 @@ if __name__ == '__main__':
 	def get_layer_ind(n):
 		print(n)
 		if "transformer" in n:
-			ind = int(n.split(".")[2])
-		else:
-			ind = total_layers - 1
+			try:
+				ind = int(n.split(".")[3])
+			except:
+				ind = total_layers - 1
 		return ind
 			
 	try:
