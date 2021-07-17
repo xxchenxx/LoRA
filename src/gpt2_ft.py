@@ -78,6 +78,8 @@ parser.add_argument('--roll_step', type=int, default=100, help='rolling step.')
 
 parser.add_argument('--eval_epoch', type=int, default=1, help='eval per number of epochs.')
 
+parser.add_argument('--alpha_init', type=int, default=5)
+
 # influence model, calculate the influence score between two samples.
 def print_args(args):
 	if args.rank == 0:
