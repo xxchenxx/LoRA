@@ -503,7 +503,7 @@ if __name__ == '__main__':
 					p.data.copy_(gpt2_params[n][0].data + (z2*z).data*gpt2_params[n][1].data)
 					nonzero_params += ((z2*z)>0).float().detach().sum().item()
 			#def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
-			train_step = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, train_step=train_step, epoch = epoch)
+			train_step = train_validate(lm_net, optimizer, alpha_optimizer, scheduler, alpha_optimizer, train_loader, valid_loader, args, gpt2_params, per_params_alpha, sparsity_pen, l0_pen, train_step=train_step, epoch = epoch)
 			
 			if train_step >= args.max_step or (args.max_epoch is not None and epoch >= args.max_epoch):
 				if args.rank == 0:
