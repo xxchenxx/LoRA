@@ -80,6 +80,8 @@ parser.add_argument('--eval_epoch', type=int, default=1, help='eval per number o
 
 parser.add_argument('--alpha_init', type=int, default=5)
 parser.add_argument('--per-params-alpha', type=int, default=1)
+parser.add_argument('--per-layer-alpha', type=int, default=0)
+
 parser.add_argument(
         "--concrete_lower",
         default=-1.5,
