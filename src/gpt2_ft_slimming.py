@@ -174,12 +174,12 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     _lm_loss = _lm_loss.mean() 
     idx_layer = 0
     from model_prune_head import Attention
-    self_slimming_coef_records = []
-    for m in model.modules():
-        if isinstance(m, Attention) and m.self_slimming:
-            self_slimming_coef_records[idx_layer].append(m.slimming_coef.detach().cpu().numpy().reshape(-1))
-            idx_layer += 1
-    
+    #self_slimming_coef_records = [[] for _ in range(24)]
+    #for m in model.modules():
+    #    if isinstance(m, Attention) and m.self_slimming:
+    #        self_slimming_coef_records[idx_layer].append(m.slimming_coef.detach().cpu().numpy().reshape(-1))
+    #        idx_layer += 1
+    #print(self_slimming_coef_records)
     l1_loss_self_coef = 0.01
     if l1_loss_self_coef > 0.0:
         l1_self_loss = 0.0
