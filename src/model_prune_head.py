@@ -111,7 +111,7 @@ class Attention(nn.Module):
         self.query = Conv1D(n_state, nx)
         self.value = Conv1D(n_state, nx)
         self.key = Conv1D(n_state, nx)
-        self.c_attn = Conv1D(n_state * 3, nx)
+        #self.c_attn = Conv1D(n_state * 3, nx)
         self.c_proj = Conv1D(n_state, nx)
 
         #self.lora_dropout = config.lora_dropout
