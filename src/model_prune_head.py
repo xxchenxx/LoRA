@@ -79,7 +79,8 @@ def prune_linear_layer(layer, index, dim=0):
         Used to remove heads.
     """
     index = index.to(layer.weight.device)
-
+    print(index)
+    print(layer.weight.shape)
     W = layer.weight.index_select(dim, index).clone().detach()
     if layer.bias is not None:
         if dim == 1:
