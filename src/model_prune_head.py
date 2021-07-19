@@ -141,7 +141,7 @@ class Attention(nn.Module):
     def prune_heads(self, heads):
         if len(heads) == 0:
             return
-        self.attention_head_size = self.split_size // self.n_head)
+        self.attention_head_size = self.split_size // self.n_head
         mask = torch.ones(self.n_head, self.split_size // self.n_head)
         heads = set(heads) - self.pruned_heads  # Convert to set and remove already pruned heads
         if self.self_slimming:
