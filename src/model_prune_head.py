@@ -79,8 +79,8 @@ def prune_linear_layer(layer, index, dim=0):
         Used to remove heads.
     """
     index = index.to(layer.weight.device)
-    print(index)
-    print(layer.weight.shape)
+    #print(index)
+    #print(layer.weight.shape)
     W = layer.weight.index_select(dim, index).clone().detach()
     if layer.bias is not None:
         if dim == 1:
@@ -141,7 +141,7 @@ class Attention(nn.Module):
     def prune_heads(self, heads):
         if len(heads) == 0:
             return
-        mask = torch.ones(self.n_head, self.split_size)
+        mask = torch.ones(self.n_head, self.split_size // self.n_head)
         heads = set(heads) - self.pruned_heads  # Convert to set and remove already pruned heads
         if self.self_slimming:
             slimming_mask = torch.ones(self.n_head)
