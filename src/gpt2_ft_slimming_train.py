@@ -162,7 +162,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
 
   train_loader.sampler.set_epoch(epoch)
   attention_modules = []
-  slimming_coefs = np.load('self_slimming_coef.npy')
+  slimming_coefs = np.load('self_slimming_coef_records.npy')
   for m in model.modules():
     if isinstance(m, Attention):
         attention_modules.append(m)
