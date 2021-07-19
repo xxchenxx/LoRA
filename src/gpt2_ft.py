@@ -242,7 +242,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 			optimizer.step()    
 			optimizer.zero_grad()
 			alpha_optimizer.step()
-			alpha_optimizer.zero()
+			alpha_optimizer.zero_grad()
 
 		if scheduler is not None:
 			scheduler.step()
