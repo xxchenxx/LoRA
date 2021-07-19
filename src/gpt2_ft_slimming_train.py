@@ -332,6 +332,7 @@ if __name__ == '__main__':
     quantile_axis = -1
     threshold = np.quantile(slimming_coefs, 0.5, axis=quantile_axis, keepdims=True)
     layers_masks = slimming_coefs > threshold
+    layers_masks = [layers_masks[i] for i in range(layers_masks.shape[0])]
     for m, mask in zip(attention_modules, layers_masks):
         pruned_heads = [i for i in range(len(attention_modules)) if mask[i] == 0]
         #print()
