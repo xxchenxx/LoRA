@@ -79,6 +79,8 @@ def prune_linear_layer(layer, index, dim=0):
         Used to remove heads.
     """
     index = index.to(layer.weight.device)
+    print(index)
+    print(layer.weight.shape)
     W = layer.weight.index_select(dim, index).clone().detach()
     if layer.bias is not None:
         if dim == 1:
@@ -162,8 +164,8 @@ class Attention(nn.Module):
         #self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
         
         # Update hyper params and store pruned heads
-        self.num_attention_heads = self.num_attention_heads - len(heads)
-        self.all_head_size = self.attention_head_size * self.num_attention_heads
+        self.n_head = self.n_head - len(heads)
+        self.all_head_size = self.attention_head_size * self.n_head
         self.pruned_heads = self.pruned_heads.union(heads)
 
         if self.self_slimming:
