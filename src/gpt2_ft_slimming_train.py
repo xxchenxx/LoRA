@@ -184,7 +184,6 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
 
     _lm_loss = _lm_loss.mean() 
     idx_layer = 0
-    from model_prune_head import Attention
 
     train_step += 1
     is_update = True if train_step % args.grad_acc == 0 else False
