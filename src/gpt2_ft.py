@@ -177,7 +177,7 @@ def evaluate(model, valid_loader, args):
 	return avg_lm_loss.avg, math.exp(avg_lm_loss.avg)
 
 
-def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler, train_loader, valid_loader, args, gpt2_params, per_params_alpha, sparsity_pen, l0_pen, train_step = 0, epoch = 0):
+def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler, train_loader, valid_loader, args, gpt2_params, per_params_alpha, sparsity_pen, train_step = 0, epoch = 0):
 	model.train()
 	avg_lm_loss = AverageMeter()
 	print('start to train the model................', epoch)
@@ -192,7 +192,55 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 		_input = data['input'].to(args.device)
 		_target = data['target'].to(args.device)
 		_msk = data['mask'].to(args.device)
+		nonzero_params = 0
+		grad_params = {}
+		if args.concrete_lower == 0:
+			log_ratio = 0
+		else:
+			log_ratio = np.log(-args.concrete_lower / args.concrete_upper)
+		l0_pen = [0] * total_layers
+		l0_pen_sum = 0
+		if args.per_params_alpha:
+			per_params_z = {}
+			per_params_z_grad = {}
 
+		for n, p in lm_net.named_parameters():
+			if n not in gpt2_params:
+				print(" n not in gpt2_params")
+			assert(n in gpt2_params)
+
+			if "classifier" in n:
+				nonzero_params += p.numel()
+				p.data.copy_(gpt2_params[n][0].data + gpt2_params[n][1].data)
+			else:
+				if args.per_params_alpha == 1:
+					params_z, params_z_grad = concrete_stretched(per_params_alpha[n], args.concrete_lower,
+							args.concrete_upper)
+					per_params_z[n] = params_z
+					per_params_z_grad[n] = params_z_grad
+
+				z, z_grad = concrete_stretched(gpt2_params[n][2], args.concrete_lower,
+											   args.concrete_upper)
+				# z, z_grad = concrete(gpt2_params[n][2], args.temp, discrete=False)
+				
+				ind = get_layer_ind(n)
+				l0_pen[ind] += torch.sigmoid(gpt2_params[n][2] - log_ratio).sum()
+				l0_pen_sum += torch.sigmoid(gpt2_params[n][2] - log_ratio).sum()
+				
+				if args.per_layer_alpha == 1:
+					z2 = per_layer_z[ind]
+				elif args.per_params_alpha == 1:
+					z2 =  per_params_z[n]
+				else:
+					z2 = 1
+
+				grad_params[n] = [gpt2_params[n][1] * z2, z * z2, z_grad, gpt2_params[n][1] * z]
+
+				if args.per_params_alpha == 1:
+					l0_pen[ind] += torch.sigmoid(per_params_alpha[n] - log_ratio).sum()
+			
+				p.data.copy_(gpt2_params[n][0].data + (z2*z).data*gpt2_params[n][1].data)
+				nonzero_params += ((z2*z)>0).float().detach().sum().item()
 		_lm_logits, _lm_loss = model(_input, lm_labels=_target, lm_mask=_msk, label_smooth=args.label_smooth) 
 
 		_lm_loss = _lm_loss.mean() 
@@ -453,57 +501,8 @@ if __name__ == '__main__':
 	try:
 		train_step = 0
 		for epoch in itertools.count(start=1):
-			nonzero_params = 0
-			grad_params = {}
-			if args.concrete_lower == 0:
-				log_ratio = 0
-			else:
-				log_ratio = np.log(-args.concrete_lower / args.concrete_upper)
-			l0_pen = [0] * total_layers
-			l0_pen_sum = 0
-			if args.per_params_alpha:
-				per_params_z = {}
-				per_params_z_grad = {}
-
-			for n, p in lm_net.named_parameters():
-				if n not in gpt2_params:
-					print(" n not in gpt2_params")
-				assert(n in gpt2_params)
-
-				if "classifier" in n:
-					nonzero_params += p.numel()
-					p.data.copy_(gpt2_params[n][0].data + gpt2_params[n][1].data)
-				else:
-					if args.per_params_alpha == 1:
-						params_z, params_z_grad = concrete_stretched(per_params_alpha[n], args.concrete_lower,
-								args.concrete_upper)
-						per_params_z[n] = params_z
-						per_params_z_grad[n] = params_z_grad
-
-					z, z_grad = concrete_stretched(gpt2_params[n][2], args.concrete_lower,
-												   args.concrete_upper)
-					# z, z_grad = concrete(gpt2_params[n][2], args.temp, discrete=False)
-					
-					ind = get_layer_ind(n)
-					l0_pen[ind] += torch.sigmoid(gpt2_params[n][2] - log_ratio).sum()
-					l0_pen_sum += torch.sigmoid(gpt2_params[n][2] - log_ratio).sum()
-					
-					if args.per_layer_alpha == 1:
-						z2 = per_layer_z[ind]
-					elif args.per_params_alpha == 1:
-						z2 =  per_params_z[n]
-					else:
-						z2 = 1
-
-					grad_params[n] = [gpt2_params[n][1] * z2, z * z2, z_grad, gpt2_params[n][1] * z]
-
-					if args.per_params_alpha == 1:
-						l0_pen[ind] += torch.sigmoid(per_params_alpha[n] - log_ratio).sum()
-				
-					p.data.copy_(gpt2_params[n][0].data + (z2*z).data*gpt2_params[n][1].data)
-					nonzero_params += ((z2*z)>0).float().detach().sum().item()
 			#def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
-			train_step = train_validate(lm_net, optimizer, alpha_optimizer, scheduler, alpha_optimizer, train_loader, valid_loader, args, gpt2_params, per_params_alpha, sparsity_pen, l0_pen, train_step=train_step, epoch = epoch)
+			train_step = train_validate(lm_net, optimizer, alpha_optimizer, scheduler, alpha_optimizer, train_loader, valid_loader, args, gpt2_params, per_params_alpha, sparsity_pen, train_step=train_step, epoch = epoch)
 			
 			if train_step >= args.max_step or (args.max_epoch is not None and epoch >= args.max_epoch):
 				if args.rank == 0:
