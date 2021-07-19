@@ -162,6 +162,7 @@ class Attention(nn.Module):
         self.query = prune_linear_layer(self.query, index)
         self.key = prune_linear_layer(self.key, index)
         self.value = prune_linear_layer(self.value, index)
+        self.c_proj = prune_linear_layer(self.c_proj, index, dim=1)
         #self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
         
         # Update hyper params and store pruned heads
@@ -282,6 +283,7 @@ class Attention(nn.Module):
         present = torch.stack((key.transpose(-2, -1), value))  # transpose to have same shapes for stacking
         a = self._attn(query, key, value, len_kv = len_kv)
         a = self.merge_heads(a)
+        print(a.shape)
         a = self.c_proj(a)
         return a, present
 
