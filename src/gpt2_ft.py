@@ -168,7 +168,8 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     _input = data['input'].to(args.device)
     _target = data['target'].to(args.device)
     _msk = data['mask'].to(args.device)
-
+    print(_msk.shape)
+    assert False
     _lm_logits, _lm_loss = model(_input, lm_labels=_target, lm_mask=_msk, label_smooth=args.label_smooth) 
 
     _lm_loss = _lm_loss.mean() 
