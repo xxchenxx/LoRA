@@ -161,18 +161,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
   best_val_ppl = None
 
   train_loader.sampler.set_epoch(epoch)
-  attention_modules = []
-  slimming_coefs = np.load('self_slimming_coef_records.npy')
-  for m in model.modules():
-    if isinstance(m, Attention):
-        attention_modules.append(m)
-    quantile_axis = -1
-    threshold = np.quantile(slimming_coefs, 0.5, axis=quantile_axis, keepdims=True)
-    layers_masks = slimming_coefs > threshold
-    for m, mask in zip(attention_modules, layers_masks):
-        pruned_heads = [i for i in range(len(attention_modules)) if mask[i] == 0]
-        m.prune_heads(pruned_heads)
-        m.self_slimming = False
+  
   for idx, data in enumerate(train_loader):
     data = {key: value for key, value in data.items()}
 
@@ -335,6 +324,18 @@ if __name__ == '__main__':
 
   try:
     train_step = 0
+    attention_modules = []
+    slimming_coefs = np.load('self_slimming_coef_records.npy')
+    for m in lm_net.modules():
+        if isinstance(m, Attention):
+            attention_modules.append(m)
+        quantile_axis = -1
+        threshold = np.quantile(slimming_coefs, 0.5, axis=quantile_axis, keepdims=True)
+        layers_masks = slimming_coefs > threshold
+        for m, mask in zip(attention_modules, layers_masks):
+            pruned_heads = [i for i in range(len(attention_modules)) if mask[i] == 0]
+            m.prune_heads(pruned_heads)
+            m.self_slimming = False
     for epoch in itertools.count(start=1):
       #def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
       train_step = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, train_step=train_step, epoch = epoch)
