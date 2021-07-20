@@ -380,7 +380,7 @@ if __name__ == '__main__':
   layers_masks = [layers_masks[i] for i in range(layers_masks.shape[0])]
   for m, mask in zip(attention_modules, layers_masks):
       pruned_heads = [i for i in range(16) if mask[i] == 0]
-      #print()
+      print(pruned_heads)
       m.prune_heads(pruned_heads)
       m.self_slimming = False
 
