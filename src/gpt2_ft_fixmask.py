@@ -488,6 +488,7 @@ if __name__ == '__main__':
 		return ind
 
 	masks = torch.load("trained_models/GPT2_M_diffpruning/e2e/model.40000.pt_pruned", map_location="cpu")
+	print(masks)
 	for n in masks:
 		masks[n] = masks[n].to(args.local_rank)
 	try:
