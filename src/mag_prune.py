@@ -27,7 +27,7 @@ def get_sparsity(threshold):
 
 l = 0
 r = 1.0
-target_sparsity = 0.5
+target_sparsity = 0.25
 print("get_sparsity(r)=", get_sparsity(r), " target=", target_sparsity)
 #assert get_sparsity(r) <= target_sparsity and get_sparsity(l) >= target_sparsity
 while l + 1e-6 < r:
@@ -49,4 +49,4 @@ for n in saved['model_state_dict']:
         assert extra.size() == saved["bert_params"][n][0].size()
         new_state_dict[n] = saved["bert_params"][n][0] + extra
 
-torch.save(saved, sys.argv[1] + "_pruned")
+torch.save(saved, sys.argv[1] + "_pruned_0.25")
