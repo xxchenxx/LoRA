@@ -282,6 +282,12 @@ class Attention(nn.Module):
 
             value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1)
             
+            print(value.shape)
+            print(value_delta.shape)
+
+            print(query.shape)
+            print(query_delta.shape)
+
             query = query.contiguous() + query_delta
             value = value.contiguous() + value_delta
 
