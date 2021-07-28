@@ -294,7 +294,7 @@ if __name__ == '__main__':
   if args.fp16:
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
-  mask = torch.load("mask_0.5.pth.tar", map_location="cpu")
+  mask = torch.load("lora_mask_0.5.pth.tar", map_location="cpu")
   for m in mask:
       mask[m] = mask[m].to(args.local_rank)
   try:
