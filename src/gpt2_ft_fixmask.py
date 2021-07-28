@@ -214,15 +214,6 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 				nonzero_params += p.numel()
 				p.data.copy_(gpt2_params[n][0].data + gpt2_params[n][1].data)
 			else:
-				if args.per_params_alpha == 1:
-					params_z, params_z_grad = concrete_stretched(per_params_alpha[n], args.concrete_lower,
-							args.concrete_upper)
-					per_params_z[n] = params_z
-					per_params_z_grad[n] = params_z_grad
-
-				#z, z_grad = concrete_stretched(gpt2_params[n][2], args.concrete_lower,
-				#								 args.concrete_upper)
-				#print(nonzero_mask)
 				z = nonzero_mask[n]
 				# z, z_grad = concrete(gpt2_params[n][2], args.temp, discrete=False)
 			
@@ -242,8 +233,6 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 				_scaled_loss.backward()
 		else:
 			_loss.backward()
-		if args.per_layer_alpha == 1:
-			per_layer_alpha.grad.zero_()
 
 		for n, p in model.named_parameters():
 			if p.grad is None or not n in gpt2_params:
@@ -252,20 +241,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 				gpt2_params[n][1].grad.copy_(p.grad.data)
 			else:
 				gpt2_params[n][1].grad.copy_(p.grad.data * grad_params[n][1].data)
-				gpt2_params[n][2].grad.copy_(p.grad.data * grad_params[n][0].data *
-											grad_params[n][2].data)
-			
-				if args.per_params_alpha == 1:
-					per_params_alpha[n].grad.copy_(torch.sum(p.grad.data * grad_params[n][3].data * 
-										per_params_z_grad[n].data))
-				if args.per_layer_alpha == 1:
-					per_layer_alpha.grad[get_layer_ind(n)] += torch.sum(p.grad.data * grad_params[n][3].data *
-					per_layer_z_grad[ind].data)
-		sum_l0_pen = 0
-		for i in range(24):
-			if l0_pen[i] != 0:
-				sum_l0_pen += (sparsity_pen[i] * l0_pen[i]).sum()
-		sum_l0_pen.sum().backward()			
+						
 		if is_update:
 			if args.clip > 0:
 				if args.fp16:
@@ -277,8 +253,6 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 
 			optimizer.step()    
 			optimizer.zero_grad()
-			alpha_optimizer.step()
-			alpha_optimizer.zero_grad()
 
 		if scheduler is not None:
 			scheduler.step()
@@ -288,28 +262,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 		params_norm = [0, 0, 0, 0, 0, 0]
 		exp_z = 0
 		for n, p in gpt2_params.items():
-			params_norm[0] += p[2].sum().item()
-			params_norm[1] += p[2].norm().item()**2
-			params_norm[2] += p[2].grad.norm().item()**2
-			params_norm[3] += torch.sigmoid(p[2]).sum().item()
 			params_norm[4] += p[2].numel()
-			# params_norm[5] += (grad_params[n][1] > 0).float().sum().item()
-			if args.per_params_alpha == 1:
-				exp_z += (torch.sigmoid(p[2]).sum() * torch.sigmoid(per_params_alpha[n])).item()
-			else:
-				exp_z += torch.sigmoid(p[2]).sum().item()
-
-			p[1].grad.zero_()
-			p[2].grad.zero_()
-
-		mean_exp_z = exp_z / params_norm[4]
-
-			
-		if args.per_layer_alpha == 1:
-			per_layer_alpha.grad.zero_()
-		if args.per_params_alpha == 1:
-			for n,p in per_params_alpha.items():
-				p.grad.zero_()
 
 		
 		if train_step % args.log_interval == 0: 
@@ -328,7 +281,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 		if train_step % args.save_interval == 0: 
 
 			for n, p in model.named_parameters():
-				if not 'adapter' in n:
+				if not n in gpt2_params:
 					continue
 				assert(n in gpt2_params)
 
@@ -458,14 +411,14 @@ if __name__ == '__main__':
 			{"params": [p[1] for n, p in gpt2_params.items() if any(nd in n for nd in no_decay) and p[1].requires_grad is True], "weight_decay": 0.0},
 	]
 	optimizer = create_adam_optimizer_from_args(lm_net, args,grouped_parameters=optimizer_grouped_parameters)
-	alpha_optimizer = torch.optim.AdamW(alpha_params, lr = 0.1, eps=args.adam_epsilon)
+	#alpha_optimizer = torch.optim.AdamW(alpha_params, lr = 0.1, eps=args.adam_epsilon)
 	
 	if args.max_step is None:
 		args.max_step = (args.max_epoch * train_data.num_batches + args.world_size - 1) // args.world_size
 		print('set max_step:', args.max_step)
 
 	scheduler = create_optimizer_scheduler(optimizer, args)
-	alpha_scheduler= create_optimizer_scheduler(alpha_optimizer, args)
+	#alpha_scheduler= create_optimizer_scheduler(alpha_optimizer, args)
 
 	if args.fp16:
 		lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
@@ -495,7 +448,7 @@ if __name__ == '__main__':
 		train_step = 0
 		for epoch in itertools.count(start=1):
 			#def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
-			train_step = train_validate(lm_net, optimizer, alpha_optimizer, scheduler, alpha_optimizer, train_loader, valid_loader, args, gpt2_params, per_params_alpha, sparsity_pen, masks, train_step=train_step, epoch = epoch)
+			train_step = train_validate(lm_net, optimizer, None, scheduler, None, train_loader, valid_loader, args, gpt2_params, per_params_alpha, sparsity_pen, masks, train_step=train_step, epoch = epoch)
 			
 			if train_step >= args.max_step or (args.max_epoch is not None and epoch >= args.max_epoch):
 				if args.rank == 0:
