@@ -256,7 +256,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 
 		if scheduler is not None:
 			scheduler.step()
-			alpha_scheduler.step()
+			#alpha_scheduler.step()
 
 		model.zero_grad()
 		params_norm = [0, 0, 0, 0, 0, 0]
