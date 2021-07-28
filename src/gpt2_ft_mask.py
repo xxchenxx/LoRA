@@ -120,8 +120,8 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, mask, is_update =
         torch.nn.utils.clip_grad_norm_(_model.parameters(), args.clip)
 
     for n, p in _model.named_parameters():
-        print(n)
-        print(mask.keys())
+        #print(n)
+        #print(mask.keys())
         if n in mask:
             p.grad.data.copy_(mask[n])
 
