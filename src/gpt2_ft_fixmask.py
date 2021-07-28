@@ -222,7 +222,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 
 				#z, z_grad = concrete_stretched(gpt2_params[n][2], args.concrete_lower,
 				#								 args.concrete_upper)
-				print(nonzero_mask)
+				#print(nonzero_mask)
 				z = nonzero_mask[n]
 				# z, z_grad = concrete(gpt2_params[n][2], args.temp, discrete=False)
 			
