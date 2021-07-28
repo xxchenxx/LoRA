@@ -203,7 +203,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 		if args.per_params_alpha:
 			per_params_z = {}
 			per_params_z_grad = {}
-
+			
 		for n, p in lm_net.named_parameters():
 			if n not in gpt2_params:
 				#print(" n not in gpt2_params")
@@ -222,6 +222,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 
 				#z, z_grad = concrete_stretched(gpt2_params[n][2], args.concrete_lower,
 				#								 args.concrete_upper)
+				print(nonzero_mask)
 				z = nonzero_mask[n]
 				# z, z_grad = concrete(gpt2_params[n][2], args.temp, discrete=False)
 			
