@@ -83,31 +83,31 @@ parser.add_argument('--per-params-alpha', type=int, default=1)
 parser.add_argument('--per-layer-alpha', type=int, default=0)
 
 parser.add_argument(
-        "--concrete_lower",
-        default=-1.5,
-        type=float,
-        help="Temperature.",
-    )
+				"--concrete_lower",
+				default=-1.5,
+				type=float,
+				help="Temperature.",
+		)
 
 parser.add_argument(
-        "--concrete_upper",
-        default=1.5,
-        type=float,
-        help="Temperature.",
-    )
+				"--concrete_upper",
+				default=1.5,
+				type=float,
+				help="Temperature.",
+		)
 parser.add_argument(
-        "--sparsity_pen",
-        default=0.000000125,
-        type=float,
-        help="Sparsity penalty.",
-    )
+				"--sparsity_pen",
+				default=0.000000125,
+				type=float,
+				help="Sparsity penalty.",
+		)
 parser.add_argument(
-        "--sparsity_penalty_per_layer",
-        default=None,
-        type=float,
-        nargs="+",
-        help="Sparsity penalty per layer.",
-    )
+				"--sparsity_penalty_per_layer",
+				default=None,
+				type=float,
+				nargs="+",
+				help="Sparsity penalty per layer.",
+		)
 parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
 # influence model, calculate the influence score between two samples.
 def print_args(args):
@@ -220,7 +220,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 					per_params_z_grad[n] = params_z_grad
 
 				z, z_grad = concrete_stretched(gpt2_params[n][2], args.concrete_lower,
-											   args.concrete_upper)
+												 args.concrete_upper)
 				# z, z_grad = concrete(gpt2_params[n][2], args.temp, discrete=False)
 				
 				ind = get_layer_ind(n)
@@ -414,21 +414,22 @@ if __name__ == '__main__':
 	finetune_params = []
 	alpha_params = []
 	for n,p in lm_net.named_parameters():
-		p0 = torch.zeros_like(p.data).copy_(p) #original BERT
-		p1 = torch.zeros_like(p.data) #params to be fine-tuned
-		p1.requires_grad = True
+		if 'adapter' in n:
+			p0 = torch.zeros_like(p.data).copy_(p) #original BERT
+			p1 = torch.zeros_like(p.data) #params to be fine-tuned
+			p1.requires_grad = True
 
-		p1.grad = torch.zeros_like(p.data)
-		alpha = torch.zeros_like(p.data) + args.alpha_init
-		alpha.requires_grad = True
-		alpha.grad = torch.zeros_like(p.data)
-		if args.local_rank != -1 or args.n_gpu > 1:
-				name = "module." + n
-		else:
-				name = n
-		gpt2_params[name] = [p0, p1, alpha]
-		finetune_params.append(gpt2_params[name][1])
-		alpha_params.append(gpt2_params[name][2])
+			p1.grad = torch.zeros_like(p.data)
+			alpha = torch.zeros_like(p.data) + args.alpha_init
+			alpha.requires_grad = True
+			alpha.grad = torch.zeros_like(p.data)
+			if args.local_rank != -1 or args.n_gpu > 1:
+					name = "module." + n
+			else:
+					name = n
+			gpt2_params[name] = [p0, p1, alpha]
+			finetune_params.append(gpt2_params[name][1])
+			alpha_params.append(gpt2_params[name][2])
 	model_device = list(lm_net.named_parameters())[0][1].device
 	if args.per_params_alpha == 1:
 		per_params_alpha = {}
@@ -442,34 +443,18 @@ if __name__ == '__main__':
 					name = n
 			per_params_alpha[name] = alpha
 			alpha_params.append(alpha)
-	if args.lora_dim == 0:
-		no_decay = ["bias", "layer_norm.weight"]
-		optimizer_grouped_parameters = [
-				{
-						"params": [p[1] for n, p in gpt2_params.items() if not any(nd in n for nd in no_decay) and p[1].requires_grad is True],
-						"weight_decay": args.weight_decay,
-				},
-				{"params": [p[1] for n, p in gpt2_params.items() if any(nd in n for nd in no_decay) and p[1].requires_grad is True], "weight_decay": 0.0},
-		]
-		optimizer = create_adam_optimizer_from_args(lm_net, args, grouped_parameters=optimizer_grouped_parameters)
-		alpha_optimizer = torch.optim.AdamW(alpha_params, lr = 0.1, eps=args.adam_epsilon)
-
-		# create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
-	else:
-		for n, p in lm_net.named_parameters():
-			if 'adapter' in n:
-				print(f'{n}, shape: {p.shape}')
-			else:
-				p.requires_grad = False
-
-		optimizer_grouped_parameters = [
-				{
-						"params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
-				}
-		]
-		optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
-		#None, args.lr, args.weight_decay, optimizer_grouped_parameters=optimizer_grouped_parameters, correct_bias=True, adam_epislon=1.0e-6)
-
+	
+	no_decay = ["bias", "layer_norm.weight"]
+	optimizer_grouped_parameters = [
+			{
+					"params": [p[1] for n, p in gpt2_params.items() if not any(nd in n for nd in no_decay) and p[1].requires_grad is True],
+					"weight_decay": args.weight_decay,
+			},
+			{"params": [p[1] for n, p in gpt2_params.items() if any(nd in n for nd in no_decay) and p[1].requires_grad is True], "weight_decay": 0.0},
+	]
+	optimizer = create_adam_optimizer_from_args(lm_net, args,grouped_parameters=optimizer_grouped_parameters)
+	alpha_optimizer = torch.optim.AdamW(alpha_params, lr = 0.1, eps=args.adam_epsilon)
+	
 	if args.max_step is None:
 		args.max_step = (args.max_epoch * train_data.num_batches + args.world_size - 1) // args.world_size
 		print('set max_step:', args.max_step)
