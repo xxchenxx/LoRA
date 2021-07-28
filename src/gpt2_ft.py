@@ -206,7 +206,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 
 		for n, p in lm_net.named_parameters():
 			if n not in gpt2_params:
-				print(" n not in gpt2_params")
+				#print(" n not in gpt2_params")
 				continue
 			#assert(n in gpt2_params)
 
