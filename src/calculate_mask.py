@@ -178,13 +178,13 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
 			for name, m in lm_net.named_modules():
 				if isinstance(m, Attention):
 					attn_mask_name = name + '.q_proj_adapter1.weight'
-					atten_mask[attn_mask_name] = torch.zeros_like(m.weight)
+					atten_mask[attn_mask_name] = torch.zeros_like(m.q_proj_adapter1.weight)
 					remain_indicator = torch.argsort(m.query_grad_scores)[-remain_heads:]
 					for index_inside_layer in remain_indicator:
 						atten_mask[attn_mask_name][index_inside_layer] = 1.
 					
 					attn_mask_name = name + '.v_proj_adapter1.weight'
-					atten_mask[attn_mask_name] = torch.zeros_like(m.weight)
+					atten_mask[attn_mask_name] = torch.zeros_like(m.v_proj_adapter1.weight)
 					remain_indicator = torch.argsort(m.value_grad_scores)[-remain_heads:]
 					for index_inside_layer in remain_indicator:
 						atten_mask[attn_mask_name][index_inside_layer] = 1.
