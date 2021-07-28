@@ -19,9 +19,10 @@ def get_sparsity(threshold):
     total = 0
     state_dict = saved['model_state_dict']
     for n in state_dict:
-        extra = state_dict[n] - saved["gpt2_params"][n][0]
-        nonzero += torch.sum((torch.abs(extra) > threshold)).item()
-        total += extra.numel()
+        if 'adapter' in n:
+            extra = state_dict[n] - saved["gpt2_params"][n][0]
+            nonzero += torch.sum((torch.abs(extra) > threshold)).item()
+            total += extra.numel()
     return 1.0 * nonzero / total
 
 l = 0
