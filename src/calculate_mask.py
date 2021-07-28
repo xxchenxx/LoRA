@@ -176,22 +176,15 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
 			elif args.model_card == 'gpt2.lg':
 				remain_heads = int(0.5 * 36)
 			for name, m in lm_net.named_modules():
-				if isinstance(m, Attention):
-					muti_head_dim = m.split_size
-					atten_dim = muti_head_dim * m.n_head
-					attn_mask_name = name + '.c_attn.weight_mask'
-					atten_mask[attn_mask_name] = torch.zeros_like(m.c_attn.weight)
+				if 'adapter1' in name:
+					attn_mask_name = name + '.weight_mask'
+					atten_mask[attn_mask_name] = torch.zeros_like(m.weight)
 					remain_indicator = torch.argsort(m.grad_scores)[-remain_heads:]
 
 					for index_inside_layer in remain_indicator:
-						q_start = index_inside_layer * muti_head_dim
-						k_start = q_start + atten_dim
-						v_start = k_start + atten_dim 
-						atten_mask[attn_mask_name][q_start: q_start + muti_head_dim, :] = 1.
-						atten_mask[attn_mask_name][k_start: k_start + muti_head_dim, :] = 1.
-						atten_mask[attn_mask_name][v_start: v_start + muti_head_dim, :] = 1.
+						atten_mask[attn_mask_name][index_inside_layer] = 1.
 						
-			torch.save(atten_mask, "mask_0.5.pth.tar")
+			torch.save(atten_mask, "lora_mask_0.5.pth.tar")
 			assert False
 			elapsed = time.time() - log_start_time
 
