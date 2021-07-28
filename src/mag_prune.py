@@ -48,7 +48,5 @@ for n in saved['model_state_dict']:
         extra[torch.abs(extra) < threshold] = 0
         assert extra.size() == saved["bert_params"][n][0].size()
         new_state_dict[n] = saved["bert_params"][n][0] + extra
-    else:
-        new_state_dict[n] = saved["bert_params"][n][0]
 
 torch.save(saved, sys.argv[1] + "_pruned")
