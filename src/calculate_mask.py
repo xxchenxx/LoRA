@@ -179,7 +179,11 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
 				if 'adapter1' in name:
 					attn_mask_name = name + '.weight_mask'
 					atten_mask[attn_mask_name] = torch.zeros_like(m.weight)
-					remain_indicator = torch.argsort(m.grad_scores)[-remain_heads:]
+					if 'query' in name:
+						remain_indicator = torch.argsort(m.query_grad_scores)[-remain_heads:]
+					else:
+						remain_indicator = torch.argsort(m.value_grad_scores)[-remain_heads:]
+
 
 					for index_inside_layer in remain_indicator:
 						atten_mask[attn_mask_name][index_inside_layer] = 1.
