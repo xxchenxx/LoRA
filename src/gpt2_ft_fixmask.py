@@ -279,7 +279,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 			avg_lm_loss.reset()
 		
 		if train_step % args.save_interval == 0: 
-
+			nonzero_params = [0,0]
 			for n, p in model.named_parameters():
 				if not n in gpt2_params:
 					continue
