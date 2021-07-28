@@ -236,8 +236,6 @@ class Attention(nn.Module):
 
     def adapter_forward(self, x, weight_1, weight_2, g_weight=None):
         scale_factor = self.lora_attn_alpha / self.lora_attn_dim
-        print(x.shape)
-        print(weight_1.shape)
         result = torch.matmul(x, weight_1.type_as(x).T)
 
         if self.lora_r_dropout is not None:
