@@ -176,15 +176,16 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
 			elif args.model_card == 'gpt2.lg':
 				remain_heads = int(0.5 * 36)
 			for name, m in lm_net.named_modules():
-				if 'adapter1' in name:
-					attn_mask_name = name + '.weight_mask'
+				if 'Attention' in name:
+					attn_mask_name = name + '.q_proj_adapter1.weight_mask'
 					atten_mask[attn_mask_name] = torch.zeros_like(m.weight)
-					if 'query' in name:
-						remain_indicator = torch.argsort(m.query_grad_scores)[-remain_heads:]
-					else:
-						remain_indicator = torch.argsort(m.value_grad_scores)[-remain_heads:]
-
-
+					remain_indicator = torch.argsort(m.query_grad_scores)[-remain_heads:]
+					for index_inside_layer in remain_indicator:
+						atten_mask[attn_mask_name][index_inside_layer] = 1.
+					
+					attn_mask_name = name + '.v_proj_adapter1.weight_mask'
+					atten_mask[attn_mask_name] = torch.zeros_like(m.weight)
+					remain_indicator = torch.argsort(m.value_grad_scores)[-remain_heads:]
 					for index_inside_layer in remain_indicator:
 						atten_mask[attn_mask_name][index_inside_layer] = 1.
 						
