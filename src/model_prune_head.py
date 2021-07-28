@@ -132,6 +132,28 @@ class Attention(nn.Module):
         self.lora_attn_alpha = config.lora_attn_alpha
         self.self_slimming = True
         self.pruned_heads = set()
+        if self.lora_attn_dim > 0:
+            self.q_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
+            nn.init.normal_(self.q_proj_adapter1.weight, std=0.02)
+            self.q_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
+            self.q_proj_adapter2.weight.data.zero_()
+
+            self.v_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
+            nn.init.normal_(self.v_proj_adapter1.weight, std=0.02)
+            self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
+            self.v_proj_adapter2.weight.data.zero_()
+
+            self.q_moe_adapter1 = None
+            self.v_moe_adapter1 = None
+
+            if self.config.lora_moe == 1:
+                num_expert = self.lora_attn_dim // self.config.lora_moe_group
+
+                self.q_moe_adapter1 = nn.Linear(nx, num_expert, bias=False)
+                nn.init.normal_(self.q_moe_adapter1.weight, std=0.02)
+
+                self.v_moe_adapter1 = nn.Linear(nx, num_expert, bias=False)
+                nn.init.normal_(self.v_moe_adapter1.weight, std=0.02)
         if self.self_slimming:
             self.slimming_coef = nn.Parameter(
                 torch.ones(self.n_head).reshape(1,-1,1,1) * 1.0
@@ -247,6 +269,19 @@ class Attention(nn.Module):
         key = self.key(x)
         value = self.value(x)
         #query, key, value = x.split(self.split_size, dim=2)
+        if self.lora_attn_dim > 0:
+            #value += self.adapter_forward(hidden_states, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight)
+            
+            lora_input = hidden_states
+            if self.lora_dropout is not None:
+                lora_input = self.lora_dropout(lora_input)
+
+            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1)
+
+            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1)
+            
+            query = query.contiguous() + query_delta
+            value = value.contiguous() + value_delta
 
         query = self.split_heads(query)
         key = self.split_heads(key, k=True)
