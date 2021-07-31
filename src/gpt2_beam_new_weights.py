@@ -377,6 +377,8 @@ if __name__ == '__main__':
   for name, p in lm_net.named_parameters():
       if 'adapter' in name:
           print(state.keys())
+          print(p.data.shape)
+          print(state[name[12:-7]].to(p.device).shape)
           p.data = state[name[12:-7]].to(p.device)
   print('model sampling ...')
   beam(lm_net, valid_loader, args)
