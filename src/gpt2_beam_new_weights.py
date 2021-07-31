@@ -376,8 +376,8 @@ if __name__ == '__main__':
   state = torch.load("lora_weights.pt", map_location="cpu")
   for name, p in lm_net.named_parameters():
       if 'adapter' in name:
-          print('transformer.' + name)
-          p.data = state['transformer.' + name].to(p.device)
+          print(name)
+          p.data = state[name[12:]].to(p.device)
   print('model sampling ...')
   beam(lm_net, valid_loader, args)
   distributed_sync(args)
