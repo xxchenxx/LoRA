@@ -7,7 +7,7 @@ count = 0
 print(checkpoint.keys())
 for k in checkpoint:
     if 'slimming_coef' in k:
-        records.append(checkpoint[k].detach().numpy())
+        records.append(checkpoint[k].detach().numpy().view(-1))
         count += 1
 
 print(count)
