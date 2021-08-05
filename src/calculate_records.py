@@ -11,4 +11,4 @@ for k in checkpoint:
         count += 1
 
 print(count)
-np.save(records, 'self_slimming_coef_records.npy')
+np.save('self_slimming_coef_records.npy', records)
