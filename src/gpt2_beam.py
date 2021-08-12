@@ -117,8 +117,6 @@ def _enforce_repetition_penalty_(lprobs, batch_size, num_beams, prev_output_toke
   """repetition penalty (from CTRL paper https://arxiv.org/abs/1909.05858). """
 
   for i in range(batch_size * num_beams):
-    print('prev_output_tokens.shape', prev_output_tokens.shape)
-    print('prev_output_tokens[i].shape', prev_output_tokens[i].shape)
 
     for previous_token in set(prev_output_tokens[i].tolist()):
       # if score < 0 then repetition penalty has to multiplied to reduce the previous token probability
