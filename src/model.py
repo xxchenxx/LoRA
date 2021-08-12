@@ -114,8 +114,8 @@ class Attention(nn.Module):
             self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.v_proj_adapter2.weight.data.zero_()
 
-            self.register_parameter("q_proj_weight", torch.nn.Parameter(torch.zeros(1)))
-            self.register_parameter("v_proj_weight", torch.nn.Parameter(torch.zeros(1)))
+            self.register_parameter("q_proj_adapter_coef", torch.nn.Parameter(torch.zeros(1)))
+            self.register_parameter("v_proj_adapter_coef", torch.nn.Parameter(torch.zeros(1)))
             
             self.q_moe_adapter1 = None
             self.v_moe_adapter1 = None
@@ -198,9 +198,9 @@ class Attention(nn.Module):
             if self.lora_dropout is not None:
                 lora_input = self.lora_dropout(lora_input)
 
-            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, self.q_proj_weight, g_weight=self.q_moe_adapter1)
+            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, self.q_proj_adapter_coef, g_weight=self.q_moe_adapter1)
 
-            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, self.v_proj_weight, g_weight=self.v_moe_adapter1)
+            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, self.v_proj_adapter_coef, g_weight=self.v_moe_adapter1)
             
             query = query.contiguous() + query_delta
             value = value.contiguous() + value_delta
