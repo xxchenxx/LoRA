@@ -205,14 +205,14 @@ class Attention(nn.Module):
         x = self.c_attn(x)
         query, key, value = x.split(self.split_size, dim=2)
         print(self.c_attn.weight.shape) # [1024, 3072]
-        B_Q = 1e-3 * (self.c_attn.weight[:, :self.nx] - self.S_Q) + 1 / 10 * \
+        B_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.S_Q) + 1 / 10 * \
             (query @ hidden_states.T - self.S_Q @ hidden_states @ hidden_states.T) 
-        C_Q = 1e-3 * (self.c_attn.weight[:, :self.nx] - self.U_Q @ self.V_Q) + 1 / 10 * \
+        C_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.U_Q @ self.V_Q) + 1 / 10 * \
             (query @ hidden_states.T - self.U_Q @ self.V_Q @ hidden_states @ hidden_states.T)
 
-        B_V = 1e-3 * (self.c_attn.weight[:, 2*self.nx:] - self.S_V) + 1 / 10 * \
+        B_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.S_V) + 1 / 10 * \
             (value @ hidden_states.T - self.S_V @ hidden_states @ hidden_states.T) 
-        C_V = 1e-3 * (self.c_attn.weight[:, 2*self.nx:] - self.U_V @ self.V_V) + 1 / 10 * \
+        C_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.U_V @ self.V_V) + 1 / 10 * \
             (value @ hidden_states.T - self.U_V @ self.V_V @ hidden_states @ hidden_states.T)
 
         assert False
