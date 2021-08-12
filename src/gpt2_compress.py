@@ -177,7 +177,6 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     is_update = True if train_step % args.grad_acc == 0 else False
     avg_lm_loss.update(_lm_loss.item())
     optimizer_step(_lm_loss/(args.grad_acc), optimizer, model, scheduler, args, is_update=is_update)
-    assert False
     if train_step % args.log_interval == 0: 
       elapsed = time.time() - log_start_time
 
