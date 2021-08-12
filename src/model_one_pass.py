@@ -211,14 +211,14 @@ class Attention(nn.Module):
         print(hidden_states_flat.shape)
         print(query_flat @ hidden_states_flat.T)
         print(self.U_Q @ self.V_Q)
-        A_Q = 1e-3 * torch.eye(self.split_size) + query_flat @ query_flat.T / 1024
+        A_Q = 1e-3 * torch.eye(self.split_size).to(query_flat.device) + query_flat @ query_flat.T / 1024
     
         B_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.S_Q) + 1 / 1024 * \
             (query_flat @ hidden_states_flat.T - self.S_Q @ hidden_states_flat @ hidden_states_flat.T) 
         C_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.U_Q @ self.V_Q) + 1 / 1024 * \
             (query_flat @ hidden_states_flat.T - self.U_Q @ self.V_Q @ hidden_states_flat @ hidden_states_flat.T)
 
-        A_V = 1e-3 * torch.eye(self.split_size) + value_flat @ value_flat.T / 1024
+        A_V = 1e-3 * torch.eye(self.split_size).to(query_flat.device) + value_flat @ value_flat.T / 1024
 
         B_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.S_V) + 1 / 1024 * \
             (value_flat @ hidden_states_flat.T - self.S_V @ hidden_states_flat @ hidden_states_flat.T) 
