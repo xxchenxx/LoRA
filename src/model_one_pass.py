@@ -204,18 +204,22 @@ class Attention(nn.Module):
 
         x = self.c_attn(x)
         query, key, value = x.split(self.split_size, dim=2)
-        print(hidden_states.shape)
-        print(query @ hidden_states.T)
-        print(self.U_Q @ self.V_Q)
-        B_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.S_Q) + 1 / 10 * \
-            (query @ hidden_states.T - self.S_Q @ hidden_states @ hidden_states.T) 
-        C_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.U_Q @ self.V_Q) + 1 / 10 * \
-            (query @ hidden_states.T - self.U_Q @ self.V_Q @ hidden_states @ hidden_states.T)
+        hidden_states_flat = hidden_states.view(-1, self.split_size)
+        query_flat = query.view(-1, self.split_size)
+        value_flat = value.view(-1, self.split_size)
 
-        B_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.S_V) + 1 / 10 * \
-            (value @ hidden_states.T - self.S_V @ hidden_states @ hidden_states.T) 
-        C_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.U_V @ self.V_V) + 1 / 10 * \
-            (value @ hidden_states.T - self.U_V @ self.V_V @ hidden_states @ hidden_states.T)
+        print(hidden_states_flat.shape)
+        print(query @ hidden_states_flat.T)
+        print(self.U_Q @ self.V_Q)
+        B_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.S_Q) + 1 / 1024 * \
+            (query_flat @ hidden_states_flat.T - self.S_Q @ hidden_states_flat @ hidden_states_flat.T) 
+        C_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.U_Q @ self.V_Q) + 1 / 1024 * \
+            (query_flat @ hidden_states_flat.T - self.U_Q @ self.V_Q @ hidden_states_flat @ hidden_states_flat.T)
+
+        B_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.S_V) + 1 / 1024 * \
+            (value_flat @ hidden_states_flat.T - self.S_V @ hidden_states_flat @ hidden_states_flat.T) 
+        C_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.U_V @ self.V_V) + 1 / 1024 * \
+            (value_flat @ hidden_states_flat.T - self.U_V @ self.V_V @ hidden_states_flat @ hidden_states_flat.T)
 
         assert False
 
