@@ -209,19 +209,39 @@ class Attention(nn.Module):
         value_flat = value.view(-1, self.split_size)
 
         print(hidden_states_flat.shape)
-        print(query @ hidden_states_flat.T)
+        print(query_flat @ hidden_states_flat.T)
         print(self.U_Q @ self.V_Q)
+        A_Q = 1e-3 * torch.eye(self.split_size) + query_flat @ query_flat.T / 1024
+    
         B_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.S_Q) + 1 / 1024 * \
             (query_flat @ hidden_states_flat.T - self.S_Q @ hidden_states_flat @ hidden_states_flat.T) 
         C_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.U_Q @ self.V_Q) + 1 / 1024 * \
             (query_flat @ hidden_states_flat.T - self.U_Q @ self.V_Q @ hidden_states_flat @ hidden_states_flat.T)
 
+        A_V = 1e-3 * torch.eye(self.split_size) + value_flat @ value_flat.T / 1024
+
         B_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.S_V) + 1 / 1024 * \
             (value_flat @ hidden_states_flat.T - self.S_V @ hidden_states_flat @ hidden_states_flat.T) 
         C_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.U_V @ self.V_V) + 1 / 1024 * \
             (value_flat @ hidden_states_flat.T - self.U_V @ self.V_V @ hidden_states_flat @ hidden_states_flat.T)
+        self.U_Q = torch.qr(B_Q @ self.V_Q.T)
+        self.V_Q = self.U_Q.T @ (B_Q @ torch.linalg.pinv(A_Q))
 
-        assert False
+        self.U_V = torch.qr(B_V @ self.V_V.T)
+        self.V_V = self.U_V.T @ (B_V @ torch.linalg.pinv(A_V))
+
+        M_Q = self.S_Q - 1e-3 * (A_Q @ self.S_Q - C_Q)
+        M_V = self.S_V - 1e-3 * (A_V @ self.S_V - C_V)
+
+        q, _ = torch.kthvalue(M_Q.view(-1), M_Q.numel() - 128)
+        M_Q[M_Q < q] = 0
+        self.S_Q = M_Q
+
+        v, _ = torch.kthvalue(M_V.view(-1), M_V.numel() - 128)
+        M_V[M_V < v] = 0
+        self.S_V = M_V
+
+        #assert False
 
         query = self.split_heads(query)
         key = self.split_heads(key, k=True)
