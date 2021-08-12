@@ -161,7 +161,12 @@ class Attention(nn.Module):
 
     def adapter_forward(self, x, weight_1, weight_2, g_weight=None):
         scale_factor = self.lora_attn_alpha / self.lora_attn_dim
-        result = torch.matmul(x, weight_1.type_as(x).T)
+        weight_1_transformed = weight_1
+        weight_1_transformed[:,0:1] = torch.elu(weight_1[:,0:1]) + 1
+        weight_1_transformed[:,1:2] = torch.elu(-weight_1[:,1:2]) + 1
+        weight_1_transformed[:,2:3] = torch.tanh(weight_1[:,2:3])
+        
+        result = torch.matmul(x, weight_1_transformed.type_as(x).T)
 
         if self.lora_r_dropout is not None:
             result = self.lora_r_dropout(result)
@@ -183,7 +188,12 @@ class Attention(nn.Module):
             result = result.view(result.shape[0], result.shape[1], result.shape[2] // self.config.lora_moe_group, self.config.lora_moe_group) * g.unsqueeze(-1)
             result = result.view(result.shape[0], result.shape[1], -1)
 
-        return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
+        weight_2_transformed = weight_2
+        weight_2_transformed[0:1,:] = torch.elu(weight_2[0:1,:]) + 1
+        weight_2_transformed[1:2,:] = torch.elu(-weight_2[1:2,:]) + 1
+        weight_2_transformed[2:3,:] = torch.tanh(weight_2[2:3,:])
+
+        return torch.matmul(result, weight_2_transformed.type_as(x).T) * scale_factor
 
     # two level attention here.
     def forward(self, x, history=None, layer_past=None, len_past=None):
