@@ -110,7 +110,8 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True)
     with amp.scale_loss(_loss, _optimizer) as _scaled_loss:
       _scaled_loss.backward()
   else:
-    _loss.backward()
+    #_loss.backward()
+    pass
 
   if is_update:
     if args.clip > 0:
