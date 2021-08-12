@@ -208,9 +208,6 @@ class Attention(nn.Module):
         query_flat = query.view(-1, self.split_size)
         value_flat = value.view(-1, self.split_size)
 
-        print(hidden_states_flat.shape)
-        print(query_flat @ hidden_states_flat.T)
-        print(self.U_Q @ self.V_Q)
         A_Q = 1e-3 * torch.eye(self.split_size).to(query_flat.device) + query_flat @ query_flat.T / 1024
     
         B_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.S_Q) + 1 / 1024 * \
