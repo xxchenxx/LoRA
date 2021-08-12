@@ -114,6 +114,9 @@ class Attention(nn.Module):
             self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.v_proj_adapter2.weight.data.zero_()
 
+            self.register_parameter("q_proj_weight", torch.zeros(1))
+            self.register_parameter("v_proj_weight", torch.zeros(1))
+            
             self.q_moe_adapter1 = None
             self.v_moe_adapter1 = None
 
@@ -159,14 +162,14 @@ class Attention(nn.Module):
         else:
             return x.permute(0, 2, 1, 3).contiguous()  # (batch, head, seq_length, head_features)
 
-    def adapter_forward(self, x, weight_1, weight_2, g_weight=None):
+    def adapter_forward(self, x, weight_1, weight_2, coef, g_weight=None):
         scale_factor = self.lora_attn_alpha / self.lora_attn_dim
 
         matrix = torch.matmul(torch.nn.functional.elu(weight_1.T[:, 0:1]) + 1, torch.nn.functional.elu(weight_2.T[0:1,:]) + 1)
         matrix += torch.matmul(torch.nn.functional.elu(-weight_1.T[:, 1:2]) + 1, torch.nn.functional.elu(-weight_2.T[1:2,:]) + 1)
         matrix += torch.matmul(torch.tanh(weight_1.T[:, 2:3]), torch.tanh(weight_2.T[2:3,:]))
 
-        result = torch.matmul(x, matrix.type_as(x)) * scale_factor
+        result = torch.matmul(x, matrix.type_as(x)) * coef * scale_factor
         
         """
         if self.lora_r_dropout is not None:
@@ -195,9 +198,9 @@ class Attention(nn.Module):
             if self.lora_dropout is not None:
                 lora_input = self.lora_dropout(lora_input)
 
-            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1)
+            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, self.q_proj_weight, g_weight=self.q_moe_adapter1)
 
-            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1)
+            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, self.v_proj_weight, g_weight=self.v_moe_adapter1)
             
             query = query.contiguous() + query_delta
             value = value.contiguous() + value_delta
