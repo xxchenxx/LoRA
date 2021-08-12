@@ -204,7 +204,9 @@ class Attention(nn.Module):
 
         x = self.c_attn(x)
         query, key, value = x.split(self.split_size, dim=2)
-        print(self.c_attn.weight.shape) # [1024, 3072]
+
+        print(query @ hidden_states.T)
+        print(self.U_Q @ self.V_Q)
         B_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.S_Q) + 1 / 10 * \
             (query @ hidden_states.T - self.S_Q @ hidden_states @ hidden_states.T) 
         C_Q = 1e-3 * (self.c_attn.weight[:, :self.split_size] - self.U_Q @ self.V_Q) + 1 / 10 * \
