@@ -225,10 +225,10 @@ class Attention(nn.Module):
         C_V = 1e-3 * (self.c_attn.weight[:, 2*self.split_size:] - self.U_V @ self.V_V) + 1 / 1024 * \
             (value_flat @ hidden_states_flat.T - self.U_V @ self.V_V @ hidden_states_flat @ hidden_states_flat.T)
         self.U_Q = torch.qr(B_Q @ self.V_Q.T)[0]
-        self.V_Q = self.U_Q.T @ (B_Q @ torch.from_numpy(np.linalg.pinv(A_Q)).to(query_flat.device))
+        self.V_Q = self.U_Q.T @ (B_Q @ torch.from_numpy(np.linalg.pinv(A_Q.detach().cpu().numpy())).to(query_flat.device))
 
         self.U_V = torch.qr(B_V @ self.V_V.T)[0]
-        self.V_V = self.U_V.T @ (B_V @ torch.from_numpy(np.linalg.pinv(A_V)).to(query_flat.device))
+        self.V_V = self.U_V.T @ (B_V @ torch.from_numpy(np.linalg.pinv(A_V.detach().cpu().numpy())).to(query_flat.device))
 
         M_Q = self.S_Q - 1e-3 * (A_Q @ self.S_Q - C_Q)
         M_V = self.S_V - 1e-3 * (A_V @ self.S_V - C_V)
