@@ -115,10 +115,10 @@ class Attention(nn.Module):
             self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.v_proj_adapter2.weight.data.zero_()
             
-            self.register_parameter('S_Q_embedding',  nn.Parameter(torch.zeros(1024, 1024)))
-            self.register_parameter('S_V_embedding',  nn.Parameter(torch.zeros(1024, 1024)))
-            self.register_parameter("S_Q", nn.Parameter(torch.zeros(1024, 1024)))
-            self.register_parameter("S_V", nn.Parameter(torch.zeros(1024, 1024)))
+            self.register_parameter('S_Q_embedding',  nn.Parameter(torch.zeros(1024, 1024)).to(self.v_proj_adapter2.weight.device))
+            self.register_parameter('S_V_embedding',  nn.Parameter(torch.zeros(1024, 1024)).to(self.v_proj_adapter2.weight.device))
+            self.register_parameter("S_Q", nn.Parameter(torch.zeros(1024, 1024)).to(self.v_proj_adapter2.weight.device))
+            self.register_parameter("S_V", nn.Parameter(torch.zeros(1024, 1024)).to(self.v_proj_adapter2.weight.device))
             self.S_Q.requires_grad = False
             self.S_V.requires_grad = False
 
