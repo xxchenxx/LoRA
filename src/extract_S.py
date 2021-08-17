@@ -8,7 +8,6 @@ extracted = {}
 for key in checkpoint:
     if 'S_Q' or 'S_V' in key:
         extracted[key] = checkpoint[key]
-        print(checkpoint[key].mean())
-        print((checkpoint[key].abs() == 0).float().mean())
+        print(checkpoint[key].shape)
 
 torch.save(extracted, "extracted_S.pth.ptar")
