@@ -294,9 +294,10 @@ if __name__ == '__main__':
   print(masks.keys())
   hit = 0
   for name, p in lm_net.named_parameters():
+	  print(name)
 	  if name in masks:
 		  print(name)
-		  
+
   assert False
   try:
     train_step = 0
