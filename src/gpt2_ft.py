@@ -275,7 +275,7 @@ if __name__ == '__main__':
 
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
+            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'embedding' in n],
         }
     ]
     optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
@@ -292,9 +292,11 @@ if __name__ == '__main__':
 
   masks = torch.load("extracted_S.pth.tar", map_location="cpu")
   print(masks.keys())
+  hit = 0
   for name, p in lm_net.named_parameters():
 	  if name in masks:
-		  print(p)
+		  print(name)
+		  
   assert False
   try:
     train_step = 0
