@@ -295,7 +295,7 @@ if __name__ == '__main__':
   hit = 0
   for name, p in lm_net.named_parameters():
 	  if name in masks:
-		  p.data = masks[name]
+		  p.data = masks[name].to(p.data.device)
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
