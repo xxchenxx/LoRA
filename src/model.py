@@ -115,10 +115,10 @@ class Attention(nn.Module):
             self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.v_proj_adapter2.weight.data.zero_()
             
-            self.register_parameter('S_Q_embedding',  nn.Parameter(torch.zeros(1024, 1024)).to(self.v_proj_adapter2.weight.device))
-            self.register_parameter('S_V_embedding',  nn.Parameter(torch.zeros(1024, 1024)).to(self.v_proj_adapter2.weight.device))
-            self.register_parameter("S_Q", nn.Parameter(torch.zeros(1024, 1024)).to(self.v_proj_adapter2.weight.device))
-            self.register_parameter("S_V", nn.Parameter(torch.zeros(1024, 1024)).to(self.v_proj_adapter2.weight.device))
+            self.register_parameter('S_Q_embedding',  nn.Parameter(torch.zeros(1024, 1024)))
+            self.register_parameter('S_V_embedding',  nn.Parameter(torch.zeros(1024, 1024)))
+            self.register_parameter("S_Q", nn.Parameter(torch.zeros(1024, 1024)))
+            self.register_parameter("S_V", nn.Parameter(torch.zeros(1024, 1024)))
             self.S_Q.requires_grad = False
             self.S_V.requires_grad = False
 
@@ -193,7 +193,9 @@ class Attention(nn.Module):
         if embedding is None:
             return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
         else:
-            return torch.matmul(result, weight_2.type_as(x).T) * scale_factor + embedding * mask
+            print(embedding)
+            print(mask)
+            return torch.matmul(result, weight_2.type_as(x).T + embedding * mask) * scale_factor 
 
 
     # two level attention here.
