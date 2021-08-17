@@ -193,9 +193,7 @@ class Attention(nn.Module):
         if embedding is None:
             return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
         else:
-            print(embedding.mean())
-            print(mask.mean())
-            return (torch.matmul(result, weight_2.type_as(x).T) + embedding * mask) * scale_factor 
+            return (torch.matmul(result, weight_2.type_as(x).T) + torch.matmul(x, embedding * mask)) * scale_factor 
 
 
     # two level attention here.
