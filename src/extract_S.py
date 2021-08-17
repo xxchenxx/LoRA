@@ -16,7 +16,7 @@ for key in checkpoint:
             mask = [1] * 128
             mask.extend([0] * (1024 * 1024 - 128))
             mask = np.array(mask)
-            mask = torch.from_numpy(np.permutation(mask))
+            mask = torch.from_numpy(np.random.permutation(mask))
             mask = mask.view(*checkpoint[key].shape)
         else:
             threshold, _ = torch.kthvalue(checkpoint[key].view(-1).detach().cpu(), 1024 * 1024 - 128)
