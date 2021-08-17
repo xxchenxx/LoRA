@@ -117,8 +117,8 @@ class Attention(nn.Module):
             
             self.S_Q_embedding = nn.Embedding(1024, 1024)
             self.S_V_embedding = nn.Embedding(1024, 1024)
-            self.register_buffer("S_Q", torch.zeros(1024, 1024))
-            self.register_buffer("S_V", torch.zeros(1024, 1024))
+            self.register_parameter("S_Q", nn.Parameter(torch.zeros(1024, 1024)))
+            self.register_parameter("S_V", nn.Parameter(torch.zeros(1024, 1024)))
             self.S_Q.requires_grad = False
             self.S_V.requires_grad = False
 
