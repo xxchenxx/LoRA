@@ -19,7 +19,7 @@ for key in checkpoint:
             mask = torch.from_numpy(np.permutation(mask))
             mask = mask.view(*checkpoint[key].shape)
         else:
-            threshold, _ = torch.kthvalue(checkpoint[key].view(-1).detach().cpu().numpy(), 1024 * 1024 - 128)
+            threshold, _ = torch.kthvalue(checkpoint[key].view(-1).detach().cpu(), 1024 * 1024 - 128)
             mask = (checkpoint[key] >= threshold).long()
 
         extracted[key] = mask
