@@ -17,7 +17,7 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 --m
     --warmup_step 500 \
     --max_epoch 5 \
     --save_interval 1000 \
-    --lora_dim 3 \
+    --lora_dim 2 \
     --lora_alpha 32 \
     --lora_dropout 0.1 \
     --label_smooth 0.1 \
