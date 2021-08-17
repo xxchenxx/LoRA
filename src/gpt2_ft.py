@@ -294,11 +294,8 @@ if __name__ == '__main__':
   print(masks.keys())
   hit = 0
   for name, p in lm_net.named_parameters():
-	  print(name)
 	  if name in masks:
-		  print(name)
-
-  assert False
+		  p.data = masks[name]
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
