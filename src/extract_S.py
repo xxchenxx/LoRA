@@ -6,8 +6,8 @@ print(checkpoint.keys())
 
 extracted = {}
 for key in checkpoint:
-    if 'S_Q' or 'S_V' in key:
+    if ('S_Q' in key) or ('S_V' in key):
         extracted[key] = checkpoint[key]
         print(checkpoint[key].shape)
 
-torch.save(extracted, "extracted_S.pth.ptar")
+torch.save(extracted, "extracted_S.pth.tar")
