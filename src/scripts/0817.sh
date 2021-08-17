@@ -22,4 +22,5 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 --m
     --lora_dropout 0.1 \
     --label_smooth 0.1 \
     --work_dir ./trained_models/GPT2_M_compress_train/e2e \
-    --random_seed 110
+    --random_seed 110 \
+    --save_interval 10000
