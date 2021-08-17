@@ -57,6 +57,7 @@ class LayerNorm(nn.Module):
         x = (x - u) / torch.sqrt(s + self.variance_epsilon)
         return self.weight * x + self.bias
 
+
 class Conv1D(nn.Module):
     def __init__(self, nf, nx):
         super(Conv1D, self).__init__()
@@ -113,6 +114,13 @@ class Attention(nn.Module):
             nn.init.normal_(self.v_proj_adapter1.weight, std=0.02)
             self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.v_proj_adapter2.weight.data.zero_()
+            
+            self.S_Q_embedding = nn.Embedding(1024, 1024)
+            self.S_V_embedding = nn.Embedding(1024, 1024)
+            self.register_buffer("S_Q", torch.zeros(1024, 1024))
+            self.register_buffer("S_V", torch.zeros(1024, 1024))
+            self.S_Q.requires_grad = False
+            self.S_V.requires_grad = False
 
             self.q_moe_adapter1 = None
             self.v_moe_adapter1 = None
@@ -159,7 +167,7 @@ class Attention(nn.Module):
         else:
             return x.permute(0, 2, 1, 3).contiguous()  # (batch, head, seq_length, head_features)
 
-    def adapter_forward(self, x, weight_1, weight_2, g_weight=None):
+    def adapter_forward(self, x, weight_1, weight_2, g_weight=None, embedding=None, mask=None):
         scale_factor = self.lora_attn_alpha / self.lora_attn_dim
         result = torch.matmul(x, weight_1.type_as(x).T)
 
@@ -182,8 +190,11 @@ class Attention(nn.Module):
 
             result = result.view(result.shape[0], result.shape[1], result.shape[2] // self.config.lora_moe_group, self.config.lora_moe_group) * g.unsqueeze(-1)
             result = result.view(result.shape[0], result.shape[1], -1)
+        if embedding is None:
+            return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
+        else:
+            return torch.matmul(result, weight_2.type_as(x).T) * scale_factor + embedding * mask
 
-        return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
 
     # two level attention here.
     def forward(self, x, history=None, layer_past=None, len_past=None):
@@ -199,9 +210,9 @@ class Attention(nn.Module):
             if self.lora_dropout is not None:
                 lora_input = self.lora_dropout(lora_input)
 
-            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1)
+            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1, embedding=self.S_Q_embedding, mask=self.S_Q)
 
-            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1)
+            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1, embedding=self.S_V_embedding, mask=self.S_V)
             
             query = query.contiguous() + query_delta
             value = value.contiguous() + value_delta

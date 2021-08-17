@@ -290,6 +290,12 @@ if __name__ == '__main__':
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
 
+  masks = torch.load("extracted_S.pth.tar", map_location="cpu")
+  print(masks.keys())
+  for name, p in lm_net.named_parameters():
+	  if name in masks:
+		  print(p)
+  assert False
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
