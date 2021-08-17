@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 --master_port=6789 src/gpt2_ft.py \
+CUDA_VISIBLE_DEVICES=0 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=6789 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
     --valid_data ./data/e2e/valid.jsonl \
     --train_batch_size 2 \
@@ -23,4 +23,4 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 --m
     --label_smooth 0.1 \
     --work_dir ./trained_models/GPT2_M_compress_train/e2e \
     --random_seed 110 \
-    --save_interval 10000
+    --save_interval 10000 > 0817.out &
