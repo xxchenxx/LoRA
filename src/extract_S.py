@@ -11,4 +11,7 @@ for key in checkpoint:
         print(checkpoint[key].shape)
         print(checkpoint[key].abs().mean())
 
+        if torch.isnan(checkpoint[key].abs().mean()):
+            print(checkpoint[key])
+
 torch.save(extracted, "extracted_S.pth.tar")
