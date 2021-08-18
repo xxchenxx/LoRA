@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=0 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=5678 src/gpt2_ft.py \
+CUDA_VISIBLE_DEVICES=1,2 nohup python -m torch.distributed.launch --nproc_per_node=2 --master_port=5678 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
     --valid_data ./data/e2e/valid.jsonl \
     --train_batch_size 2 \
