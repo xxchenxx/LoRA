@@ -231,11 +231,11 @@ class Attention(nn.Module):
         M_V = self.S_V - 1e-3 * (A_V @ self.S_V - C_V)
 
         q, _ = torch.kthvalue(M_Q.view(-1), M_Q.numel() - 128)
-        M_Q[M_Q < q] = 0
+        M_Q = M_Q * (M_Q >= q).float()
         self.S_Q = M_Q
 
         v, _ = torch.kthvalue(M_V.view(-1), M_V.numel() - 128)
-        M_V[M_V < v] = 0
+        M_V = M_V * (M_V >= v).float()
         self.S_V = M_V
 
         #assert False
