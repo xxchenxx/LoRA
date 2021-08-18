@@ -278,6 +278,7 @@ if __name__ == '__main__':
             "params": [p for n, p in lm_net.named_parameters() if ('adapter' in n) or ('embedding' in n)],
         }
     ]
+    print(optimizer_grouped_parameters)
     optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
     #None, args.lr, args.weight_decay, optimizer_grouped_parameters=optimizer_grouped_parameters, correct_bias=True, adam_epislon=1.0e-6)
 
@@ -294,8 +295,8 @@ if __name__ == '__main__':
   print(masks.keys())
   hit = 0
   for name, p in lm_net.named_parameters():
-	  if name in masks:
-		  p.data = masks[name].to(p.data.device).float()
+      if name in masks:
+          p.data = masks[name].to(p.data.device).float()
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
