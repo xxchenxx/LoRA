@@ -193,6 +193,9 @@ class Attention(nn.Module):
         if embedding is None:
             return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
         else:
+            mask = torch.randn(mask.shape).to(mask.device)
+            threshold, _ = torch.kthvalue(mask.view(-1), 128)
+            mask = (mask < threshold).float()
             return (torch.matmul(result, weight_2.type_as(x).T) + torch.matmul(x, embedding * mask)) * scale_factor 
 
 
