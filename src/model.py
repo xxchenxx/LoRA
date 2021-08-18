@@ -121,7 +121,8 @@ class Attention(nn.Module):
             self.register_parameter("S_V", nn.Parameter(torch.zeros(1024, 1024)))
             self.S_Q.requires_grad = False
             self.S_V.requires_grad = False
-
+            self.S_Q_embedding.requires_grad = True
+            self.S_V_embedding.requires_grad = True
             self.q_moe_adapter1 = None
             self.v_moe_adapter1 = None
 

@@ -275,7 +275,7 @@ if __name__ == '__main__':
 
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'embedding' in n],
+            "params": [p for n, p in lm_net.named_parameters() if ('adapter' in n) or ('embedding' in n)],
         }
     ]
     optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
