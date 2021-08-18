@@ -21,6 +21,6 @@ CUDA_VISIBLE_DEVICES=0 nohup python -m torch.distributed.launch --nproc_per_node
     --lora_alpha 32 \
     --lora_dropout 0.1 \
     --label_smooth 0.1 \
-    --work_dir ./trained_models/GPT2_M_compress_train/e2e \
+    --work_dir ./trained_models/GPT2_M_random_compress_train/e2e \
     --random_seed 110 \
     --save_interval 10000 > 0818_train_random_compress.out &
