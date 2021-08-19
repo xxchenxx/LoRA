@@ -168,6 +168,7 @@ class Attention(nn.Module):
             return x.permute(0, 2, 1, 3).contiguous()  # (batch, head, seq_length, head_features)
 
     def adapter_forward(self, x, weight_1, weight_2, g_weight=None, embedding=None, mask=None):
+        print(self.training)
         scale_factor = self.lora_attn_alpha / self.lora_attn_dim
         result = torch.matmul(x, weight_1.type_as(x).T)
 
