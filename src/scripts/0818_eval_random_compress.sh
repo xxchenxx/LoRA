@@ -4,7 +4,7 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 src
     --seq_len 512 \
     --eval_len 64 \
     --model_card gpt2.md \
-    --init_checkpoint ./trained_models/GPT2_M_random_compress_train/e2e/model.50000.pt \
+    --init_checkpoint ./trained_models/GPT2_M_random_compress_train/e2e/model.42060.pt \
     --platform local \
     --lora_dim 2 \
     --lora_alpha 32 \
@@ -14,6 +14,6 @@ CUDA_VISIBLE_DEVICES=0 python -m torch.distributed.launch --nproc_per_node=1 src
     --repetition_penalty 1.0 \
     --eos_token_id 628 \
     --work_dir ./trained_models/GPT2_M_random_compress_train/e2e \
-    --output_file predict.50000.b10p08.jsonl
+    --output_file predict.42060.b10p08.jsonl
 
 
