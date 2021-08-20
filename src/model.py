@@ -115,10 +115,18 @@ class Attention(nn.Module):
             self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.v_proj_adapter2.weight.data.zero_()
             
+            
+
             self.register_parameter('S_Q_embedding',  nn.Parameter(torch.zeros(1024, 1024)))
             self.register_parameter('S_V_embedding',  nn.Parameter(torch.zeros(1024, 1024)))
-            self.register_parameter("S_Q", nn.Parameter(torch.zeros(1024, 1024)))
-            self.register_parameter("S_V", nn.Parameter(torch.zeros(1024, 1024)))
+            mask = torch.randn(1024,1024)
+            threshold, _ = torch.kthvalue(mask.view(-1), 128)
+            mask = (mask <= threshold).float()
+            self.register_parameter("S_Q", nn.Parameter(mask))
+            mask = torch.randn(1024,1024)
+            threshold, _ = torch.kthvalue(mask.view(-1), 128)
+            mask = (mask <= threshold).float()
+            self.register_parameter("S_V", nn.Parameter(mask))
             self.S_Q.requires_grad = False
             self.S_V.requires_grad = False
 
@@ -194,9 +202,7 @@ class Attention(nn.Module):
             return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
         else:
             if self.training:
-                mask = torch.randn(mask.shape).to(mask.device)
-                threshold, _ = torch.kthvalue(mask.view(-1), 128)
-                mask = (mask <= threshold).float()
+                
                 assert (mask == 1).float().sum() == 128
             else:
                 mask = torch.zeros_like(mask)
