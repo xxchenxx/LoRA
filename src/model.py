@@ -126,6 +126,7 @@ class Attention(nn.Module):
             mask = torch.randn(1024,1024)
             threshold, _ = torch.kthvalue(mask.view(-1), 128)
             mask = (mask <= threshold).float()
+            print(mask.sum())
             self.register_parameter("S_V", nn.Parameter(mask))
             self.S_Q.requires_grad = False
             self.S_V.requires_grad = False
