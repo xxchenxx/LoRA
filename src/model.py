@@ -203,7 +203,7 @@ class Attention(nn.Module):
             return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
         else:
             if self.training:
-                #print((mask == 1).float().sum())
+                print((mask == 1).float().sum())
                 assert (mask == 1).float().sum() == 128
             else:
                 mask = torch.zeros_like(mask)
