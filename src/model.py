@@ -121,11 +121,11 @@ class Attention(nn.Module):
             self.register_parameter('S_V_embedding',  nn.Parameter(torch.zeros(1024, 1024)))
             mask = torch.randn(1024,1024)
             threshold, _ = torch.kthvalue(mask.view(-1), 128)
-            mask = (mask <= threshold).float()
+            mask = (mask < threshold).float()
             self.register_parameter("S_Q", nn.Parameter(mask))
             mask = torch.randn(1024,1024)
             threshold, _ = torch.kthvalue(mask.view(-1), 128)
-            mask = (mask <= threshold).float()
+            mask = (mask < threshold).float()
             print(mask.sum())
             self.register_parameter("S_V", nn.Parameter(mask))
             self.S_Q.requires_grad = False
@@ -203,7 +203,7 @@ class Attention(nn.Module):
             return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
         else:
             if self.training:
-                print((mask == 1).float().sum())
+                #print((mask == 1).float().sum())
                 assert (mask == 1).float().sum() == 128
             else:
                 mask = torch.zeros_like(mask)
