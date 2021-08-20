@@ -196,7 +196,8 @@ class Attention(nn.Module):
             if self.training:
                 mask = torch.randn(mask.shape).to(mask.device)
                 threshold, _ = torch.kthvalue(mask.view(-1), 128)
-                mask = (mask < threshold).float()
+                mask = (mask <= threshold).float()
+                assert (mask == 1).float().sum() == 128
             else:
                 mask = torch.zeros_like(mask)
                 
