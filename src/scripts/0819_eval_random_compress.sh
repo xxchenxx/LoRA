@@ -6,7 +6,7 @@ CUDA_VISIBLE_DEVICES=1 python -m torch.distributed.launch --nproc_per_node=1 src
     --model_card gpt2.md \
     --init_checkpoint ./trained_models/GPT2_M_random_compress_train/e2e/model.52575.pt \
     --platform local \
-    --lora_dim 1 \
+    --lora_dim 2 \
     --lora_alpha 32 \
     --beam 10 \
     --length_penalty 0.8 \
