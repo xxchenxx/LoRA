@@ -179,7 +179,7 @@ def _add_beam_candidate(best_score, best_sequence, batch_size, num_beams, beam_s
       beam_scores.view(-1)[_i] = -float("inf")
 
 def beam(model, data_iter, args):
-  model.eval()
+  model.train()
   total_loss = 0.
   start_time = time.time()
 
