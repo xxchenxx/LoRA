@@ -13,7 +13,7 @@ from optimizer import create_adam_optimizer, create_optimizer_scheduler, add_opt
 
 
 from data_utils import FT_Dataset # BinCorpus, BinLMOrderedIterator
-from model_one_pass import GPT2Config, GPT2LMModel
+from model import GPT2Config, GPT2LMModel, Attention
 from exp_utils import create_exp_dir
 
 import itertools
@@ -110,8 +110,7 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True)
     with amp.scale_loss(_loss, _optimizer) as _scaled_loss:
       _scaled_loss.backward()
   else:
-    #_loss.backward()
-    pass
+    _loss.backward()
 
   if is_update:
     if args.clip > 0:
@@ -120,7 +119,7 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True)
       else:
         torch.nn.utils.clip_grad_norm_(_model.parameters(), args.clip)
 
-    #_optimizer.step()    
+    _optimizer.step()    
     _optimizer.zero_grad()
 
   if _schedule is not None:
@@ -177,6 +176,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     is_update = True if train_step % args.grad_acc == 0 else False
     avg_lm_loss.update(_lm_loss.item())
     optimizer_step(_lm_loss/(args.grad_acc), optimizer, model, scheduler, args, is_update=is_update)
+    
     if train_step % args.log_interval == 0: 
       elapsed = time.time() - log_start_time
 
@@ -275,7 +275,7 @@ if __name__ == '__main__':
 
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
+            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'embedding' in n],
         }
     ]
     optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
@@ -290,23 +290,31 @@ if __name__ == '__main__':
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
 
-  try:
-    train_step = 0
-    for epoch in itertools.count(start=1):
-      #def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
-      train_step = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, train_step=train_step, epoch = epoch)
-      
-      if train_step >= args.max_step or (args.max_epoch is not None and epoch >= args.max_epoch):
-        if args.rank == 0:
-          print('-' * 100)
-          print('End of training')
-        break
-  except KeyboardInterrupt:
-    if args.rank == 0:
-      print('-' * 100)
-      print('Exiting from training early')
+  U_Q_change_total = []
+  for _ in range(1000):
+    for name, module in lm_net.named_modules():
+      U_Q_change = []
+      if isinstance(module, Attention):
+        module.S_Q.data = torch.zeros(1024, 1024)
+        module.S_V.data = torch.zeros(1024, 1024)
 
-  distributed_sync(args)
-  print('cleanup dist ...')
-  cleanup(args)
+        Q_weight = module.c_attn.weight[:, :module.split_size]
+        V_weight = module.c_attn.weight[:, 2*module.split_size:]
 
+        U_Q = torch.qr((Q_weight - module.S_Q) @ module.V_Q.T)[0]
+        U_Q_change.append(torch.norm(U_Q - module.U_Q))
+        module.U_Q = U_Q
+        module.V_Q = module.U_Q.T @ (Q_weight - module.S_Q.data)
+        module.S_Q = module.U_Q @ module.V_Q
+
+        q, _ = torch.kthvalue(module.S_Q.abs().view(-1), module.S_Q.numel() - 128)
+        module.S_Q[module.S_Q.abs() < q] = 0
+
+        module.U_V = torch.qr((Q_weight - module.S_V) @ module.V_V.T)[0]
+        module.V_V = module.U_V.T @ (Q_weight - module.S_V.data)
+        module.S_V = module.U_V @ module.V_V
+
+        v, _ = torch.kthvalue(module.S_V.abs().view(-1), module.S_V.numel() - 128)
+        module.S_V[module.S_V.abs() < v] = 0
+    U_Q_change_total.append(U_Q_change[0])
+  print(U_Q_change_total)
