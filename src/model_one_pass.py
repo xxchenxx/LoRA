@@ -230,12 +230,12 @@ class Attention(nn.Module):
         M_Q = self.S_Q - 1e-3 * (A_Q @ self.S_Q - C_Q)
         M_V = self.S_V - 1e-3 * (A_V @ self.S_V - C_V)
 
-        q, _ = torch.kthvalue(M_Q.view(-1), M_Q.numel() - 128)
-        M_Q[M_Q < q] = 0
+        q, _ = torch.kthvalue(M_Q.abs().view(-1), M_Q.numel() - 128)
+        M_Q[M_Q.abs() < q] = 0
         self.S_Q = M_Q
 
-        v, _ = torch.kthvalue(M_V.view(-1), M_V.numel() - 128)
-        M_V[M_V < v] = 0
+        v, _ = torch.kthvalue(M_V.abs().view(-1), M_V.numel() - 128)
+        M_V[M_V.abs() < v] = 0
         self.S_V = M_V
 
         #assert False
