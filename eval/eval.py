@@ -334,6 +334,7 @@ if __name__ == '__main__':
     
     metrics = metrics.lower().split(',')
     headers, values = [], []
+    print(result)
     if 'bleu' in metrics:
         headers.append('BLEU')
         values.append(result['bleu'])
