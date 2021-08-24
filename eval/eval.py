@@ -339,26 +339,26 @@ if __name__ == '__main__':
         values.append(result['bleu'])
 
         headers.append('BLEU NLTK')
-        values.append(round(result['bleu_nltk'], 2))
+        values.append(round(result['bleu_nltk'], 4))
     if 'meteor' in metrics:
         headers.append('METEOR')
-        values.append(round(result['meteor'], 2))
+        values.append(round(result['meteor'], 4))
     if 'chrf++' in metrics:
         headers.append('chrF++')
-        values.append(round(result['chrf++'], 2))
+        values.append(round(result['chrf++'], 4))
     if 'ter' in metrics:
         headers.append('TER')
-        values.append(round(result['ter'], 2))
+        values.append(round(result['ter'], 4))
     if 'bert' in metrics:
         headers.append('BERT-SCORE P')
-        values.append(round(result['bert_precision'], 2))
+        values.append(round(result['bert_precision'], 4))
         headers.append('BERT-SCORE R')
-        values.append(round(result['bert_recall'], 2))
+        values.append(round(result['bert_recall'], 4))
         headers.append('BERT-SCORE F1')
-        values.append(round(result['bert_f1'], 2))
+        values.append(round(result['bert_f1'], 4))
     if 'bleurt' in metrics and lng == 'en':
         headers.append('BLEURT')
-        values.append(round(result['bleurt'], 2))
+        values.append(round(result['bleurt'], 4))
 
     logging.info('PRINTING RESULTS...')
     print(tabulate([values], headers=headers))
