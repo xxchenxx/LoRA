@@ -1,7 +1,7 @@
 import torch
 import numpy as np
-
-checkpoint = torch.load("./trained_models/GPT2_M/e2e/model.100.pt", map_location="cpu")['model_state_dict']
+import sys
+checkpoint = torch.load(f"./trained_models/GPT2_M/e2e/model.{sys.argv[1]}.pt", map_location="cpu")['model_state_dict']
 
 print(checkpoint.keys())
 
