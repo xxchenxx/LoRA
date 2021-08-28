@@ -4,6 +4,7 @@ import math
 import os, sys
 
 import torch
+import random
 torch.set_printoptions(threshold=100000)
 
 import numpy as np
@@ -85,6 +86,15 @@ def print_args(args):
     for k, v in args.__dict__.items():
       print('    - {} : {}'.format(k, v))
     print('=' * 100)
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seed)
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
 
 class AverageMeter(object):
   """Computes and stores the average and current value
@@ -228,11 +238,13 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     torch.save({'model_state_dict': model.state_dict()}, model_path) 
   distributed_sync(args)
   return train_step
+
 if __name__ == '__main__':
   args = parser.parse_args()
+  set_seed(args.random_seed)
   parse_gpu(args)
   print_args(args)
-  
+
   if args.rank == 0:
     args.logging = create_exp_dir(args.work_dir)
 
