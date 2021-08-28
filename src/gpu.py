@@ -40,9 +40,7 @@ def distributed_sync(args):
   else:
     args.dist.barrier()
 
-def parse_gpu(args):
-  torch.manual_seed(args.random_seed)
-  
+def parse_gpu(args):  
   if args.platform == 'local':
     dist.init_process_group(backend='nccl')
     local_rank = torch.distributed.get_rank()

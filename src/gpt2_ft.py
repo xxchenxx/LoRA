@@ -86,6 +86,16 @@ def print_args(args):
       print('    - {} : {}'.format(k, v))
     print('=' * 100)
 
+import random
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seed)
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+
 class AverageMeter(object):
   """Computes and stores the average and current value
      Imported from https://github.com/pytorch/examples/blob/master/imagenet/main.py#L247-L262
@@ -230,6 +240,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
   return train_step
 if __name__ == '__main__':
   args = parser.parse_args()
+  set_seed(args.random_seed)
   parse_gpu(args)
   print_args(args)
   
