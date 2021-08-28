@@ -13,7 +13,7 @@ from optimizer import create_adam_optimizer, create_optimizer_scheduler, add_opt
 
 
 from data_utils import FT_Dataset # BinCorpus, BinLMOrderedIterator
-from model import GPT2Config, GPT2LMModel
+from model import GPT2Config, GPT2LMModel, Attention
 from exp_utils import create_exp_dir
 
 import itertools
@@ -290,12 +290,36 @@ if __name__ == '__main__':
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
 
-  masks = torch.load("extracted_S.pth.tar", map_location="cpu")
-  print(masks.keys())
-  hit = 0
-  for name, p in lm_net.named_parameters():
-	  if name in masks:
-		  p.data = masks[name].to(p.data.device).float()
+  U_Q_change_total = []
+  for _ in range(1000):
+    for name, module in lm_net.named_modules():
+      U_Q_change = []
+      if isinstance(module, Attention):
+        module.S_Q.data = torch.zeros(1024, 1024)
+        module.S_V.data = torch.zeros(1024, 1024)
+
+        Q_weight = module.c_attn.weight[:, :module.split_size]
+        V_weight = module.c_attn.weight[:, 2*module.split_size:]
+
+        U_Q = torch.qr((Q_weight - module.S_Q) @ module.V_Q.T)[0]
+        U_Q_change.append(torch.norm(U_Q - module.U_Q))
+        module.U_Q = U_Q
+        module.V_Q = module.U_Q.T @ (Q_weight - module.S_Q.data)
+        module.S_Q = module.U_Q @ module.V_Q
+
+        q, _ = torch.kthvalue(module.S_Q.abs().view(-1), module.S_Q.numel() - 128)
+        module.S_Q[module.S_Q.abs() < q] = 0
+
+        module.U_V = torch.qr((Q_weight - module.S_V) @ module.V_V.T)[0]
+        module.V_V = module.U_V.T @ (Q_weight - module.S_V.data)
+        module.S_V = module.U_V @ module.V_V
+
+        v, _ = torch.kthvalue(module.S_V.abs().view(-1), module.S_V.numel() - 128)
+        module.S_V[module.S_V.abs() < v] = 0
+    U_Q_change_total.append(U_Q_change[0])
+
+  assert False
+  
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
