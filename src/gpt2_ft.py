@@ -322,7 +322,7 @@ if __name__ == '__main__':
     
     
     U_Q_change_total.append(U_Q_change[0])
-
+  print(U_Q_change_total)
   assert False
 
   try:
