@@ -292,8 +292,8 @@ if __name__ == '__main__':
 
   U_Q_change_total = []
   for _ in range(1000):
+    U_Q_change = []
     for name, module in lm_net.named_modules():
-      U_Q_change = []
       if isinstance(module, Attention):
         module.S_Q.data = torch.zeros(1024, 1024).to(module.S_Q.device)
         module.S_V.data = torch.zeros(1024, 1024).to(module.S_Q.device)
@@ -319,6 +319,8 @@ if __name__ == '__main__':
 
         v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
         module.S_V.data[module.S_V.data.abs() < v] = 0
+    
+    
     U_Q_change_total.append(U_Q_change[0])
 
   assert False
