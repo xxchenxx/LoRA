@@ -194,10 +194,8 @@ class Attention(nn.Module):
 
             result = result.view(result.shape[0], result.shape[1], result.shape[2] // self.config.lora_moe_group, self.config.lora_moe_group) * g.unsqueeze(-1)
             result = result.view(result.shape[0], result.shape[1], -1)
-        if embedding is None:
-            return torch.matmul(result, weight_2.type_as(x).T) * scale_factor
-        else:                
-            return (torch.matmul(result, weight_2.type_as(x).T) + torch.matmul(x, embedding * mask)) * scale_factor 
+                     
+        return (torch.matmul(result, weight_2.type_as(x).T) + torch.matmul(x, embedding * mask)) * scale_factor 
 
 
     # two level attention here.
