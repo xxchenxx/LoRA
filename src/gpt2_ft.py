@@ -308,8 +308,8 @@ if __name__ == '__main__':
         module.q_proj_adapter1.weight.data = V_Q
         module.S_Q.data = U_Q @ V_Q
 
-        q, _ = torch.kthvalue(module.S_Q.abs().view(-1), module.S_Q.numel() - 128)
-        module.S_Q.data[module.S_Q.abs() < q] = 0
+        q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
+        module.S_Q.data[module.S_Q.data.abs() < q] = 0
 
         U_V = torch.qr((V_weight - module.S_V) @ module.v_proj_adapter1.weight.data.T)[0]
         module.v_proj_adapter2.weight.data = U_V
@@ -317,8 +317,8 @@ if __name__ == '__main__':
         module.v_proj_adapter1.weight.data = V_V
         module.S_V.data = U_V @ V_V
 
-        v, _ = torch.kthvalue(module.S_V.abs().view(-1), module.S_V.numel() - 128)
-        module.S_V.data[module.S_V.abs() < v] = 0
+        v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
+        module.S_V.data[module.S_V.data.abs() < v] = 0
     U_Q_change_total.append(U_Q_change[0])
 
   assert False
