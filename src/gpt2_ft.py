@@ -295,8 +295,8 @@ if __name__ == '__main__':
     for name, module in lm_net.named_modules():
       U_Q_change = []
       if isinstance(module, Attention):
-        module.S_Q.data = torch.zeros(1024, 1024)
-        module.S_V.data = torch.zeros(1024, 1024)
+        module.S_Q.data = torch.zeros(1024, 1024).to(module.S_Q.device)
+        module.S_V.data = torch.zeros(1024, 1024).to(module.S_Q.device)
 
         Q_weight = module.c_attn.weight[:, :module.split_size]
         V_weight = module.c_attn.weight[:, 2*module.split_size:]
@@ -319,7 +319,7 @@ if __name__ == '__main__':
     U_Q_change_total.append(U_Q_change[0])
 
   assert False
-  
+
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
