@@ -323,7 +323,13 @@ if __name__ == '__main__':
     
     U_Q_change_total.append(U_Q_change[0])
   print(U_Q_change_total)
-  assert False
+  import torch.nn as nn
+  for name, module in lm_net.named_modules():
+      if isinstance(module, Attention):
+        nn.init.normal_(module.q_proj_adapter1.weight, std=0.02)
+        module.q_proj_adapter2.weight.data.zero_()
+        nn.init.normal_(module.v_proj_adapter1.weight, std=0.02)
+        module.v_proj_adapter2.weight.data.zero_()
 
   try:
     train_step = 0
