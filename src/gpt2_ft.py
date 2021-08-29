@@ -302,7 +302,7 @@ if __name__ == '__main__':
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
 
   U_Q_change_total = []
-  for _ in range(1000):
+  for _ in range(500):
     U_Q_change = []
     for name, module in lm_net.named_modules():
       if isinstance(module, Attention):
