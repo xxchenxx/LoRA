@@ -78,6 +78,9 @@ parser.add_argument('--roll_step', type=int, default=100, help='rolling step.')
 
 parser.add_argument('--eval_epoch', type=int, default=1, help='eval per number of epochs.')
 
+parser.add_argument('--compress_step', type=int, default=1000, help='compress_step')
+
+
 # influence model, calculate the influence score between two samples.
 def print_args(args):
   if args.rank == 0:
@@ -302,7 +305,7 @@ if __name__ == '__main__':
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
 
   U_Q_change_total = []
-  for _ in range(500):
+  for _ in range(args.compress_step):
     U_Q_change = []
     for name, module in lm_net.named_modules():
       if isinstance(module, Attention):
