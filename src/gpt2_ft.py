@@ -304,13 +304,15 @@ if __name__ == '__main__':
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
 
+  for name, module in lm_net.named_modules():
+    if isinstance(module, Attention):
+      module.S_Q.data = torch.zeros(1024, 1024).to(module.S_Q.device)
+      module.S_V.data = torch.zeros(1024, 1024).to(module.S_Q.device)
+      
   U_Q_change_total = []
   for _ in range(args.compress_step):
     U_Q_change = []
     for name, module in lm_net.named_modules():
-      if isinstance(module, Attention):
-        module.S_Q.data = torch.zeros(1024, 1024).to(module.S_Q.device)
-        module.S_V.data = torch.zeros(1024, 1024).to(module.S_Q.device)
 
         Q_weight = module.c_attn.weight[:, :module.split_size]
         V_weight = module.c_attn.weight[:, 2*module.split_size:]
