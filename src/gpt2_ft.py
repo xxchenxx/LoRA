@@ -308,7 +308,7 @@ if __name__ == '__main__':
     if isinstance(module, Attention):
       module.S_Q.data = torch.zeros(1024, 1024).to(module.S_Q.device)
       module.S_V.data = torch.zeros(1024, 1024).to(module.S_Q.device)
-      
+
   U_Q_change_total = []
   for _ in range(args.compress_step):
     U_Q_change = []
@@ -339,6 +339,7 @@ if __name__ == '__main__':
     
     U_Q_change_total.append(U_Q_change[0])
   print(U_Q_change_total)
+  assert False
   import torch.nn as nn
   for name, module in lm_net.named_modules():
       if isinstance(module, Attention):
