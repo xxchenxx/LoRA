@@ -313,7 +313,7 @@ if __name__ == '__main__':
   for _ in range(args.compress_step):
     U_Q_change = []
     for name, module in lm_net.named_modules():
-
+      if isinstance(module, Attention):
         Q_weight = module.c_attn.weight[:, :module.split_size]
         V_weight = module.c_attn.weight[:, 2*module.split_size:]
 
