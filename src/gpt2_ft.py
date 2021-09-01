@@ -329,7 +329,7 @@ if __name__ == '__main__':
 
         U_V = torch.qr((V_weight - module.S_V.data) @ module.v_proj_adapter1.weight.data.T)[0]
         module.v_proj_adapter2.weight.data = U_V
-        V_V = U_V.T @ (Q_weight - module.S_V.data)
+        V_V = U_V.T @ (V_weight - module.S_V.data)
         module.v_proj_adapter1.weight.data = V_V
         module.S_V.data = -U_V @ V_V
 
