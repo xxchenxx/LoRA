@@ -80,6 +80,7 @@ parser.add_argument('--eval_epoch', type=int, default=1, help='eval per number o
 
 parser.add_argument('--compress_step', type=int, default=1000, help='compress_step')
 
+parser.add_argument('--lambda_s', type=float, default=0.01, help='lambda_s')
 
 # influence model, calculate the influence score between two samples.
 def print_args(args):
@@ -324,7 +325,8 @@ if __name__ == '__main__':
         module.q_proj_adapter1.weight.data = V_Q
         module.S_Q.data = -U_Q @ V_Q
 
-        q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
+        #q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
+        q = args.lambda_s
         module.S_Q.data[module.S_Q.data.abs() < q] = 0
 
         U_V = torch.qr((V_weight - module.S_V.data) @ module.v_proj_adapter1.weight.data.T)[0]
@@ -333,7 +335,8 @@ if __name__ == '__main__':
         module.v_proj_adapter1.weight.data = V_V
         module.S_V.data = -U_V @ V_V
 
-        v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
+        #v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
+        v = args.lambda_s
         module.S_V.data[module.S_V.data.abs() < v] = 0
     
     
