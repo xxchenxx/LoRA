@@ -34,7 +34,7 @@ CUDA_VISIBLE_DEVICES=1 nohup python -m torch.distributed.launch --nproc_per_node
     --work_dir ./trained_models/GPT2_M/webnlg_challenge_2017_rank3_bilateral_step1000 \
     --output_file predict.45065.b10p08.jsonl &
 
-CUDA_VISIBLE_DEVICES=2 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8762 src/gpt2_beam.py \
+CUDA_VISIBLE_DEVICES=2 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8763 src/gpt2_beam.py \
     --data ./data/e2e/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
@@ -52,7 +52,7 @@ CUDA_VISIBLE_DEVICES=2 nohup python -m torch.distributed.launch --nproc_per_node
     --work_dir ./trained_models/GPT2_M/webnlg_challenge_2017_rank2_bilateral_step1000 \
     --output_file predict.45065.b10p08.jsonl &
 
-CUDA_VISIBLE_DEVICES=3 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8762 src/gpt2_beam.py \
+CUDA_VISIBLE_DEVICES=3 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8764 src/gpt2_beam.py \
     --data ./data/e2e/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
