@@ -350,6 +350,10 @@ if __name__ == '__main__':
         module.q_proj_adapter2.weight.data.zero_()
         nn.init.normal_(module.v_proj_adapter1.weight, std=0.02)
         module.v_proj_adapter2.weight.data.zero_()
+        q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
+        v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
+        module.S_Q.data[module.S_Q.data.abs() < q] = 0
+        module.S_V.data[module.S_V.data.abs() < v] = 0
         module.S_V.data = (module.S_V.data.abs() > 0).float()
         module.S_Q.data = (module.S_Q.data.abs() > 0).float()
         assert abs(module.S_V.data.sum() - 128) < 3
