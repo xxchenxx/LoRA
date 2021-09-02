@@ -9,7 +9,7 @@ CUDA_VISIBLE_DEVICES=0 nohup python -m torch.distributed.launch --nproc_per_node
     --lora_dim 4 \
     --lora_alpha 32 \
     --beam 10 \
-    --length_penalty 0.8 \
+    --length_penalty 0.9 \
     --no_repeat_ngram_size 4 \
     --repetition_penalty 1.0 \
     --eos_token_id 628 \
@@ -27,7 +27,7 @@ CUDA_VISIBLE_DEVICES=1 nohup python -m torch.distributed.launch --nproc_per_node
     --lora_dim 3 \
     --lora_alpha 32 \
     --beam 10 \
-    --length_penalty 0.8 \
+    --length_penalty 0.9 \
     --no_repeat_ngram_size 4 \
     --repetition_penalty 1.0 \
     --eos_token_id 628 \
@@ -45,7 +45,7 @@ CUDA_VISIBLE_DEVICES=2 nohup python -m torch.distributed.launch --nproc_per_node
     --lora_dim 2 \
     --lora_alpha 32 \
     --beam 10 \
-    --length_penalty 0.8 \
+    --length_penalty 0.9 \
     --no_repeat_ngram_size 4 \
     --repetition_penalty 1.0 \
     --eos_token_id 628 \
@@ -63,7 +63,7 @@ CUDA_VISIBLE_DEVICES=3 nohup python -m torch.distributed.launch --nproc_per_node
     --lora_dim 1 \
     --lora_alpha 32 \
     --beam 10 \
-    --length_penalty 0.8 \
+    --length_penalty 0.9 \
     --no_repeat_ngram_size 4 \
     --repetition_penalty 1.0 \
     --eos_token_id 628 \
