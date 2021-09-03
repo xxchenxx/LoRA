@@ -117,8 +117,8 @@ class Attention(nn.Module):
             
             
 
-            self.register_parameter('S_Q_embedding',  nn.Parameter(torch.zeros(1024, 1024)))
-            self.register_parameter('S_V_embedding',  nn.Parameter(torch.zeros(1024, 1024)))
+            self.S_Q_embedding = nn.Linear(1024, 1024, bias=False)
+            self.S_V_embedding = nn.Linear(1024, 1024, bias=False)
             mask = torch.zeros(1024,1024)
             self.register_parameter("S_Q", nn.Parameter(mask))
             mask = torch.zeros(1024,1024)
@@ -212,9 +212,9 @@ class Attention(nn.Module):
             if self.lora_dropout is not None:
                 lora_input = self.lora_dropout(lora_input)
 
-            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1, embedding=self.S_Q_embedding, mask=self.S_Q)
+            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1, embedding=self.S_Q_embedding.weight, mask=self.S_Q)
 
-            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1, embedding=self.S_V_embedding, mask=self.S_V)
+            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1, embedding=self.S_V_embedding.weight, mask=self.S_V)
             
             query = query.contiguous() + query_delta
             value = value.contiguous() + value_delta
