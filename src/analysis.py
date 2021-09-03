@@ -1,8 +1,6 @@
 import torch
-a = torch.load("./trained_models/GPT2_M_bilateral_rank1_1/e2e/model.105155.pt", map_location='cpu')
-['model_state_dict']
-b = torch.load("./trained_models/GPT2_M_bilateral_rank1_10/e2e/model.105155.pt", map_location='cpu')
-['model_state_dict']
+a = torch.load("./trained_models/GPT2_M_bilateral_rank1_1/e2e/model.105155.pt", map_location='cpu')['model_state_dict']
+b = torch.load("./trained_models/GPT2_M_bilateral_rank1_10/e2e/model.105155.pt", map_location='cpu')['model_state_dict']
 
 for key in a:
     print(key)
