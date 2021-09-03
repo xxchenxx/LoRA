@@ -8,4 +8,6 @@ for key in a:
         print(key)
         print(a[key])
         print(b[key])
-        print((a[key] * b[key]).sum())
+        print(a[key].abs().sum())
+        print(b[key].abs().sum())
+        print((a[key] * b[key]).abs().sum())
