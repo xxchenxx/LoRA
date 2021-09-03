@@ -373,7 +373,8 @@ if __name__ == '__main__':
     lm_net.load_weight(cp)  
   lm_net = lm_net.cuda()
   for key, p in lm_net.named_parameters():
-      if 'S_V_embedding' in key:
+      
+      if 'S_V' in key:
           print(p.data.abs().mean())
   print('model sampling ...')
   #beam(lm_net, valid_loader, args)
