@@ -5,6 +5,7 @@ b = torch.load("./trained_models/GPT2_M_bilateral_rank1_10/e2e/model.105155.pt",
 ['model_state_dict']
 
 for key in a:
+    print(key)
     if 'S_V_embedding' in key:
         print(key)
         print(a[key])
