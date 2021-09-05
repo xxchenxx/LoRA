@@ -154,18 +154,20 @@ def meteor_score(references, hypothesis, num_refs, lng='en'):
     try:
         command = 'java -Xmx2G -jar {0} '.format(METEOR_PATH)
         command += '{0} {1} -l {2} -norm -r {3}'.format(hyps_tmp, refs_tmp, lng, num_refs)
+        print(command)
         result = subprocess.check_output(command, shell=True)
         meteor = result.split(b'\n')[-2].split()[-1]
     except:
         logging.error('ERROR ON COMPUTING METEOR. MAKE SURE YOU HAVE JAVA INSTALLED GLOBALLY ON YOUR MACHINE.')
         print('ERROR ON COMPUTING METEOR. MAKE SURE YOU HAVE JAVA INSTALLED GLOBALLY ON YOUR MACHINE.')
         meteor = -1
-
+    '''
     try:
         os.remove(hyps_tmp)
         os.remove(refs_tmp)
     except:
         pass
+    '''
     logging.info('FINISHING TO COMPUTE METEOR...')
     print('FINISHING TO COMPUTE METEOR...')
     return float(meteor)
