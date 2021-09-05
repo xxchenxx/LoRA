@@ -154,18 +154,20 @@ def meteor_score(references, hypothesis, num_refs, lng='en'):
     try:
         command = 'java -Xmx2G -jar {0} '.format(METEOR_PATH)
         command += '{0} {1} -l {2} -norm -r {3}'.format(hyps_tmp, refs_tmp, lng, num_refs)
+        print(command)
         result = subprocess.check_output(command, shell=True)
         meteor = result.split(b'\n')[-2].split()[-1]
     except:
         logging.error('ERROR ON COMPUTING METEOR. MAKE SURE YOU HAVE JAVA INSTALLED GLOBALLY ON YOUR MACHINE.')
         print('ERROR ON COMPUTING METEOR. MAKE SURE YOU HAVE JAVA INSTALLED GLOBALLY ON YOUR MACHINE.')
         meteor = -1
-
+    '''
     try:
         os.remove(hyps_tmp)
         os.remove(refs_tmp)
     except:
         pass
+    '''
     logging.info('FINISHING TO COMPUTE METEOR...')
     print('FINISHING TO COMPUTE METEOR...')
     return float(meteor)
@@ -334,31 +336,32 @@ if __name__ == '__main__':
     
     metrics = metrics.lower().split(',')
     headers, values = [], []
+    print(result)
     if 'bleu' in metrics:
         headers.append('BLEU')
         values.append(result['bleu'])
 
         headers.append('BLEU NLTK')
-        values.append(round(result['bleu_nltk'], 2))
+        values.append(round(result['bleu_nltk'], 4))
     if 'meteor' in metrics:
         headers.append('METEOR')
-        values.append(round(result['meteor'], 2))
+        values.append(round(result['meteor'], 4))
     if 'chrf++' in metrics:
         headers.append('chrF++')
-        values.append(round(result['chrf++'], 2))
+        values.append(round(result['chrf++'], 4))
     if 'ter' in metrics:
         headers.append('TER')
-        values.append(round(result['ter'], 2))
+        values.append(round(result['ter'], 4))
     if 'bert' in metrics:
         headers.append('BERT-SCORE P')
-        values.append(round(result['bert_precision'], 2))
+        values.append(round(result['bert_precision'], 4))
         headers.append('BERT-SCORE R')
-        values.append(round(result['bert_recall'], 2))
+        values.append(round(result['bert_recall'], 4))
         headers.append('BERT-SCORE F1')
-        values.append(round(result['bert_f1'], 2))
+        values.append(round(result['bert_f1'], 4))
     if 'bleurt' in metrics and lng == 'en':
         headers.append('BLEURT')
-        values.append(round(result['bleurt'], 2))
+        values.append(round(result['bleurt'], 4))
 
     logging.info('PRINTING RESULTS...')
     print(tabulate([values], headers=headers))
