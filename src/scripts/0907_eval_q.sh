@@ -12,7 +12,7 @@ python eval.py \
     -R data/references_webnlg/reference \
     -H data/hypothesis_webnlg \
     -nr 6 \
-    -m bleu,meteor,ter >> 0906_eval.out
+    -m bleu,meteor,ter >> 0907_eval.out
 cd ../..
 
 python src/gpt2_decode.py \
@@ -29,7 +29,7 @@ python eval.py \
     -R data/references_webnlg/reference \
     -H data/hypothesis_webnlg \
     -nr 6 \
-    -m bleu,meteor,ter >> 0906_eval.out
+    -m bleu,meteor,ter >> 0907_eval.out
 cd ../..
 
 python src/gpt2_decode.py \
@@ -46,7 +46,7 @@ python eval.py \
     -R data/references_webnlg/reference \
     -H data/hypothesis_webnlg \
     -nr 6 \
-    -m bleu,meteor,ter >> 0906_eval.out
+    -m bleu,meteor,ter >> 0907_eval.out
 cd ../..
 
 python src/gpt2_decode.py \
@@ -63,5 +63,5 @@ python eval.py \
     -R data/references_webnlg/reference \
     -H data/hypothesis_webnlg \
     -nr 6 \
-    -m bleu,meteor,ter >> 0906_eval.out
+    -m bleu,meteor,ter >> 0907_eval.out
 cd ../..
