@@ -80,7 +80,7 @@ parser.add_argument('--eval_epoch', type=int, default=1, help='eval per number o
 
 parser.add_argument('--compress_step', type=int, default=1000, help='compress_step')
 
-parser.add_argument('--lambda_s', type=float, default=0.01, help='lambda_s')
+parser.add_argument('--lambda_s', type=float, default=0.1, help='lambda_s')
 
 # influence model, calculate the influence score between two samples.
 def print_args(args):
