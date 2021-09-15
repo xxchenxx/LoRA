@@ -316,7 +316,7 @@ if __name__ == '__main__':
     for name, module in lm_net.named_modules():
       if isinstance(module, Attention):
         Q_weight = module.c_attn.weight[:, :module.split_size]
-        V_weight = module.c_attn.weight[:, 2*module.split_size:]
+        V_weight = module.c_attn.weight[:, module.split_size:2*module.split_size]
 
         U_Q = torch.qr((Q_weight - module.S_Q.data) @ module.q_proj_adapter1.weight.data.T)[0]
         U_Q_change.append(torch.norm(U_Q - module.q_proj_adapter2.weight.data).item())

@@ -214,10 +214,10 @@ class Attention(nn.Module):
 
             query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1, embedding=self.S_Q_embedding.weight, mask=self.S_Q)
 
-            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1, embedding=self.S_V_embedding.weight, mask=self.S_V)
+            key_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1, embedding=self.S_V_embedding.weight, mask=self.S_V)
             
             query = query.contiguous() + query_delta
-            value = value.contiguous() + value_delta
+            key = key.contiguous() + key_delta
 
         query = self.split_heads(query)
         key = self.split_heads(key, k=True)
