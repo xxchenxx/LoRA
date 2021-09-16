@@ -356,6 +356,8 @@ if __name__ == '__main__':
         module.S_V.data[module.S_V.data.abs() < v] = 0
         module.S_V.data = (module.S_V.data.abs() > 0).float()
         module.S_Q.data = (module.S_Q.data.abs() > 0).float()
+        print(module.S_V.data.sum())
+        print(module.S_V.data.sum())
         assert abs(module.S_V.data.sum() - 128) < 3
         assert abs(module.S_V.data.sum() - 128) < 3
 
