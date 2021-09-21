@@ -228,9 +228,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 				l0_pen[ind] += torch.sigmoid(gpt2_params[n][2] - log_ratio).sum()
 				l0_pen_sum += torch.sigmoid(gpt2_params[n][2] - log_ratio).sum()
 				
-				if args.per_layer_alpha == 1:
-					z2 = per_layer_z[ind]
-				elif args.per_params_alpha == 1:
+				if args.per_params_alpha == 1:
 					z2 =  per_params_z[n]
 				else:
 					z2 = 1
@@ -255,9 +253,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 				_scaled_loss.backward()
 		else:
 			_loss.backward()
-		if args.per_layer_alpha == 1:
-			per_layer_alpha.grad.zero_()
-
+      
 		for n, p in model.named_parameters():
 			if p.grad is None or not n in gpt2_params:
 				continue
@@ -271,9 +267,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 				if args.per_params_alpha == 1:
 					per_params_alpha[n].grad.copy_(torch.sum(p.grad.data * grad_params[n][3].data * 
 										per_params_z_grad[n].data))
-				if args.per_layer_alpha == 1:
-					per_layer_alpha.grad[get_layer_ind(n)] += torch.sum(p.grad.data * grad_params[n][3].data *
-					per_layer_z_grad[ind].data)
+
 		sum_l0_pen = 0
 		for i in range(24):
 			if l0_pen[i] != 0:
@@ -317,9 +311,6 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
 
 		mean_exp_z = exp_z / params_norm[4]
 
-			
-		if args.per_layer_alpha == 1:
-			per_layer_alpha.grad.zero_()
 		if args.per_params_alpha == 1:
 			for n,p in per_params_alpha.items():
 				p.grad.zero_()
@@ -415,7 +406,7 @@ if __name__ == '__main__':
 	finetune_params = []
 	alpha_params = []
 	for n,p in lm_net.named_parameters():
-		if 'adapter' in n:
+		if 'c_attn' in n:
 			p0 = torch.zeros_like(p.data).copy_(p) #original BERT
 			p1 = torch.zeros_like(p.data) #params to be fine-tuned
 			p1.requires_grad = True
