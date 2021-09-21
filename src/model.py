@@ -106,17 +106,14 @@ class Attention(nn.Module):
 
         if self.lora_attn_dim > 0:
             self.q_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
-            self.q_proj_adapter1.weight.data.zero_()
-
+            nn.init.normal_(self.q_proj_adapter1.weight, std=0.02)
             self.q_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
-            self.q_proj_adapter2.weight.data.zero_()
+            nn.init.normal_(self.q_proj_adapter2.weight, std=0.02)
 
             self.v_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
-            self.v_proj_adapter1.weight.data.zero_()
-            
+            nn.init.normal_(self.q_proj_adapter1.weight, std=0.02)
             self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
-            self.v_proj_adapter2.weight.data.zero_()
-            
+            nn.init.normal_(self.q_proj_adapter2.weight, std=0.02)
             
 
             self.S_Q_embedding = nn.Linear(1024, 1024, bias=False)
