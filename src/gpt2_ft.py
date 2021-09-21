@@ -345,8 +345,9 @@ if __name__ == '__main__':
         E_V = V_weight - U_V @ V_V - S_V
         E_Q_vector = torch.qr(E_Q)[1][:1]
         E_V_vector = torch.qr(E_V)[1][:1]
-        V_Q = torch.cat([V_Q, E_Q_vector])
-        V_V = torch.cat([V_V, E_V_vector])
+        if (rank < 126):
+          V_Q = torch.cat([V_Q, E_Q_vector])
+          V_V = torch.cat([V_V, E_V_vector])
       
       print(residual_change)
 
