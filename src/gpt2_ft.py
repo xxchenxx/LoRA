@@ -323,7 +323,7 @@ if __name__ == '__main__':
       U_V = module.v_proj_adapter2.weight.data
       V_V = module.v_proj_adapter1.weight.data
       S_V = module.S_V.data
-      for rank in range(7):
+      for rank in range(100):
         for _ in range(args.compress_step):
           U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
           V_Q = U_Q.T @ (Q_weight - module.S_Q.data)
