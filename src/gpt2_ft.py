@@ -256,7 +256,7 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
     for n, p in model.named_parameters():
       if p.grad is None or not n in gpt2_params:
         continue
-      if "classifier" in n:
+      if "ln_f" in n or 'adapter' in n:
         gpt2_params[n][1].grad.copy_(p.grad.data)
       else:
         gpt2_params[n][1].grad.copy_(p.grad.data * grad_params[n][1].data)
