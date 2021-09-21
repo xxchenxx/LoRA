@@ -283,7 +283,7 @@ if __name__ == '__main__':
     # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
   else:
     for n, p in lm_net.named_parameters():
-      if 'adapter' in n or 'embedding' in n:
+      if 'q_proj' in n or 'embedding' in n:
         print(f'{n}, shape: {p.shape}')
       else:
         p.requires_grad = False
