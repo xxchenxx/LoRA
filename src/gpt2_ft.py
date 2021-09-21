@@ -290,7 +290,7 @@ if __name__ == '__main__':
 
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'embedding' in n],
+            "params": [p for n, p in lm_net.named_parameters() if 'q_proj' in n or 'embedding' in n],
         }
     ]
     optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
@@ -346,10 +346,10 @@ if __name__ == '__main__':
   import torch.nn as nn
   for name, module in lm_net.named_modules():
       if isinstance(module, Attention):
-        nn.init.normal_(module.q_proj_adapter1.weight, std=0.02)
-        module.q_proj_adapter2.weight.data.zero_()
-        nn.init.normal_(module.v_proj_adapter1.weight, std=0.02)
-        module.v_proj_adapter2.weight.data.zero_()
+        #nn.init.normal_(module.q_proj_adapter1.weight, std=0.02)
+        #module.q_proj_adapter2.weight.data.zero_()
+        #nn.init.normal_(module.v_proj_adapter1.weight, std=0.02)
+        #module.v_proj_adapter2.weight.data.zero_()
         q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
         v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
         module.S_Q.data[module.S_Q.data.abs() < q] = 0
