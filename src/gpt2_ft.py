@@ -311,38 +311,46 @@ if __name__ == '__main__':
       module.S_V.data = torch.zeros(1024, 1024).to(module.S_Q.device)
 
   U_Q_change_total = []
-  for _ in range(args.compress_step):
-    U_Q_change = []
-    for name, module in lm_net.named_modules():
-      if isinstance(module, Attention):
-        Q_weight = module.c_attn.weight[:, :module.split_size]
-        V_weight = module.c_attn.weight[:, 2*module.split_size:]
+  for name, module in lm_net.named_modules():
+    residual_change = []
+    if isinstance(module, Attention):
+      Q_weight = module.c_attn.weight[:, :module.split_size]
+      V_weight = module.c_attn.weight[:, 2*module.split_size:]
+      U_Q = torch.zeros_like(module.q_proj_adapter2.weight.data)
+      V_Q = torch.zeros_like(module.q_proj_adapter1.weight.data)
+      S_Q = module.S_Q.data
 
-        U_Q = torch.qr((Q_weight - module.S_Q.data) @ module.q_proj_adapter1.weight.data.T)[0]
-        module.q_proj_adapter2.weight.data = U_Q
+      U_V = torch.zeros_like(module.v_proj_adapter2.weight.data)
+      V_V = torch.zeros_like(module.v_proj_adapter1.weight.data)
+      S_V = module.S_V.data
+      for _ in range(args.compress_step):
+        U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
         V_Q = U_Q.T @ (Q_weight - module.S_Q.data)
-        module.q_proj_adapter1.weight.data = V_Q
-        module.S_Q.data = -U_Q @ V_Q
-        U_Q_change.append(torch.norm(Q_weight - U_Q@V_Q).item())
+        S_Q = Q_weight - U_Q @ V_Q
+        residual_change.append(torch.norm(Q_weight - U_Q@V_Q).item())
 
         #q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
         q = args.lambda_s
-        module.S_Q.data[module.S_Q.data.abs() < q] = 0
+        S_Q[S_Q.abs() < q] = 0
 
-        U_V = torch.qr((V_weight - module.S_V.data) @ module.v_proj_adapter1.weight.data.T)[0]
-        module.v_proj_adapter2.weight.data = U_V
-        V_V = U_V.T @ (V_weight - module.S_V.data)
-        module.v_proj_adapter1.weight.data = V_V
-        module.S_V.data = -U_V @ V_V
-
-        #v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
-        v = args.lambda_s
-        module.S_V.data[module.S_V.data.abs() < v] = 0
+        U_V = torch.qr((Q_weight - S_V) @ V_V.T)[0]
+        V_V = U_V.T @ (Q_weight - module.S_V.data)
+        S_V = Q_weight - U_V @ V_V
+        #residual_change.append(torch.norm(Q_weight - U_V@V_V).item())
+        q = args.lambda_s
+        S_V[S_V.abs() < q] = 0
     
     
-    U_Q_change_total.append(U_Q_change[0])
-  print(U_Q_change_total)
+      print(residual_change)
 
+      module.q_proj_adapter2.weight.data = U_Q
+      module.q_proj_adapter1.weight.data = V_Q
+      module.S_Q.data = S_Q
+
+      module.v_proj_adapter2.weight.data = U_V
+      module.v_proj_adapter1.weight.data = V_V
+      module.S_V.data = S_V
+      
   import torch.nn as nn
   for name, module in lm_net.named_modules():
       if isinstance(module, Attention):
