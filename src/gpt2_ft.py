@@ -316,12 +316,12 @@ if __name__ == '__main__':
     if isinstance(module, Attention):
       Q_weight = module.c_attn.weight[:, :module.split_size]
       V_weight = module.c_attn.weight[:, 2*module.split_size:]
-      U_Q = torch.zeros_like(module.q_proj_adapter2.weight.data)
-      V_Q = torch.zeros_like(module.q_proj_adapter1.weight.data)
+      U_Q = torch.module.q_proj_adapter2.weight.data
+      V_Q = torch.module.q_proj_adapter1.weight.data
       S_Q = module.S_Q.data
 
-      U_V = torch.zeros_like(module.v_proj_adapter2.weight.data)
-      V_V = torch.zeros_like(module.v_proj_adapter1.weight.data)
+      U_V = torch.module.v_proj_adapter2.weight.data
+      V_V = torch.module.v_proj_adapter1.weight.data
       S_V = module.S_V.data
       for rank in range(7):
         for _ in range(args.compress_step):
