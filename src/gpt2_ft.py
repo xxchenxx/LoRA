@@ -323,24 +323,31 @@ if __name__ == '__main__':
       U_V = torch.zeros_like(module.v_proj_adapter2.weight.data)
       V_V = torch.zeros_like(module.v_proj_adapter1.weight.data)
       S_V = module.S_V.data
-      for _ in range(args.compress_step):
-        U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
-        V_Q = U_Q.T @ (Q_weight - module.S_Q.data)
-        S_Q = Q_weight - U_Q @ V_Q
-        residual_change.append(torch.norm(Q_weight - U_Q@V_Q).item())
+      for rank in range(7):
+        for _ in range(args.compress_step):
+          U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
+          V_Q = U_Q.T @ (Q_weight - module.S_Q.data)
+          S_Q = Q_weight - U_Q @ V_Q
+          residual_change.append(torch.norm(Q_weight - U_Q@V_Q).item())
 
-        #q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
-        q = args.lambda_s
-        S_Q[S_Q.abs() < q] = 0
+          #q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
+          q = args.lambda_s
+          S_Q[S_Q.abs() < q] = 0
 
-        U_V = torch.qr((Q_weight - S_V) @ V_V.T)[0]
-        V_V = U_V.T @ (Q_weight - module.S_V.data)
-        S_V = Q_weight - U_V @ V_V
-        #residual_change.append(torch.norm(Q_weight - U_V@V_V).item())
-        q = args.lambda_s
-        S_V[S_V.abs() < q] = 0
-    
-    
+          U_V = torch.qr((Q_weight - S_V) @ V_V.T)[0]
+          V_V = U_V.T @ (Q_weight - module.S_V.data)
+          S_V = Q_weight - U_V @ V_V
+          #residual_change.append(torch.norm(Q_weight - U_V@V_V).item())
+          q = args.lambda_s
+          S_V[S_V.abs() < q] = 0
+
+        E_Q = Q_weight - U_Q @ V_Q - S_Q
+        E_V = V_weight - U_V @ V_V - S_V
+        E_Q_vector = torch.qr(E_Q)[1][0]
+        E_V_vector = torch.qr(E_V)[1][0]
+        V_Q = torch.cat([V_Q, E_Q_vector])
+        V_V = torch.cat([V_V, E_V_vector])
+      
       print(residual_change)
 
       module.q_proj_adapter2.weight.data = U_Q
