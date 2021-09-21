@@ -343,8 +343,8 @@ if __name__ == '__main__':
 
         E_Q = Q_weight - U_Q @ V_Q - S_Q
         E_V = V_weight - U_V @ V_V - S_V
-        E_Q_vector = torch.qr(E_Q)[1][:1]
-        E_V_vector = torch.qr(E_V)[1][:1]
+        E_Q_vector = torch.qr(E_Q)[1][:10]
+        E_V_vector = torch.qr(E_V)[1][:10]
         V_Q = torch.cat([V_Q, E_Q_vector])
         V_V = torch.cat([V_V, E_V_vector])
       
