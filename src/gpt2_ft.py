@@ -319,11 +319,11 @@ if __name__ == '__main__':
         V_weight = module.c_attn.weight[:, 2*module.split_size:]
 
         U_Q = torch.qr((Q_weight - module.S_Q.data) @ module.q_proj_adapter1.weight.data.T)[0]
-        U_Q_change.append(torch.norm(U_Q - module.q_proj_adapter2.weight.data).item())
         module.q_proj_adapter2.weight.data = U_Q
         V_Q = U_Q.T @ (Q_weight - module.S_Q.data)
         module.q_proj_adapter1.weight.data = V_Q
         module.S_Q.data = -U_Q @ V_Q
+        U_Q_change.append(torch.norm(Q_weight - U_Q@V_Q).item())
 
         #q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
         q = args.lambda_s
