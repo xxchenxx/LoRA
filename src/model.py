@@ -172,7 +172,6 @@ class Attention(nn.Module):
             return x.permute(0, 2, 1, 3).contiguous()  # (batch, head, seq_length, head_features)
 
     def adapter_forward(self, x, weight_1, weight_2, g_weight=None, embedding=None, mask=None):
-        scale_factor = self.lora_attn_alpha / self.lora_attn_dim
         result = torch.matmul(x, weight_1.type_as(x).T)
 
         if self.lora_r_dropout is not None:
@@ -195,7 +194,7 @@ class Attention(nn.Module):
             result = result.view(result.shape[0], result.shape[1], result.shape[2] // self.config.lora_moe_group, self.config.lora_moe_group) * g.unsqueeze(-1)
             result = result.view(result.shape[0], result.shape[1], -1)
                      
-        return (torch.matmul(result, weight_2.type_as(x).T) + torch.matmul(x, embedding * mask)) * scale_factor 
+        return (torch.matmul(result, weight_2.type_as(x).T) + torch.matmul(x, embedding * mask))
 
 
     # two level attention here.
