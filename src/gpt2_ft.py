@@ -320,8 +320,8 @@ if __name__ == '__main__':
       V_Q = torch.randn((1, module.q_proj_adapter1.weight.data.shape[1])).to(Q_weight.device)
       S_Q = module.S_Q.data
 
-      U_Q = torch.randn((module.v_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device)
-      V_Q = torch.randn((1, module.v_proj_adapter1.weight.data.shape[1])).to(Q_weight.device)
+      U_V = torch.randn((module.v_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device)
+      V_V = torch.randn((1, module.v_proj_adapter1.weight.data.shape[1])).to(Q_weight.device)
       S_V = module.S_V.data
       for rank in range(127):
         for _ in range(args.compress_step):
