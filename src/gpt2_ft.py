@@ -210,15 +210,14 @@ def train_validate(model, optimizer, alpha_optimizer, scheduler, alpha_scheduler
         continue
       #assert(n in gpt2_params)
 
-      if "classifier" in n:
+      if "ln_f" in n or 'adapter' in n:
         nonzero_params += p.numel()
         p.data.copy_(gpt2_params[n][0].data + gpt2_params[n][1].data)
       else:
-        if args.per_params_alpha == 1:
-          params_z, params_z_grad = concrete_stretched(per_params_alpha[n], args.concrete_lower,
+        params_z, params_z_grad = concrete_stretched(per_params_alpha[n], args.concrete_lower,
               args.concrete_upper)
-          per_params_z[n] = params_z
-          per_params_z_grad[n] = params_z_grad
+        per_params_z[n] = params_z
+        per_params_z_grad[n] = params_z_grad
 
         z, z_grad = concrete_stretched(gpt2_params[n][2], args.concrete_lower,
                          args.concrete_upper)
@@ -406,24 +405,22 @@ if __name__ == '__main__':
   finetune_params = []
   alpha_params = []
   for n,p in lm_net.named_parameters():
-    print(n)
-    if 'c_attn' in n:
-      p0 = torch.zeros_like(p.data).copy_(p) #original BERT
-      p1 = torch.zeros_like(p.data) #params to be fine-tuned
-      p1.requires_grad = True
+    p0 = torch.zeros_like(p.data).copy_(p) #original BERT
+    p1 = torch.zeros_like(p.data) #params to be fine-tuned
+    p1.requires_grad = True
 
-      p1.grad = torch.zeros_like(p.data)
-      alpha = torch.zeros_like(p.data) + args.alpha_init
-      alpha.requires_grad = True
-      alpha.grad = torch.zeros_like(p.data)
-      if args.local_rank != -1 or args.n_gpu > 1:
-          name = "module." + n
-      else:
-          name = n
-      gpt2_params[name] = [p0, p1, alpha]
-      finetune_params.append(gpt2_params[name][1])
-      alpha_params.append(gpt2_params[name][2])
-  assert False
+    p1.grad = torch.zeros_like(p.data)
+    alpha = torch.zeros_like(p.data) + args.alpha_init
+    alpha.requires_grad = True
+    alpha.grad = torch.zeros_like(p.data)
+    if args.local_rank != -1 or args.n_gpu > 1:
+        name = "module." + n
+    else:
+        name = n
+    gpt2_params[name] = [p0, p1, alpha]
+    finetune_params.append(gpt2_params[name][1])
+    alpha_params.append(gpt2_params[name][2])
+
   model_device = list(lm_net.named_parameters())[0][1].device
   if args.per_params_alpha == 1:
     per_params_alpha = {}
