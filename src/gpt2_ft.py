@@ -310,57 +310,54 @@ if __name__ == '__main__':
       module.S_Q.data = torch.zeros(1024, 1024).to(module.S_Q.device)
       module.S_V.data = torch.zeros(1024, 1024).to(module.S_Q.device)
 
-  U_Q_change_total = []
-  for _ in range(args.compress_step):
-    U_Q_change = []
-    for name, module in lm_net.named_modules():
-      if isinstance(module, Attention):
-        Q_weight = module.c_attn.weight[:, :module.split_size]
-        V_weight = module.c_attn.weight[:, 2*module.split_size:]
-
-        U_Q = torch.qr((Q_weight - module.S_Q.data) @ module.q_proj_adapter1.weight.data.T)[0]
-        U_Q_change.append(torch.norm(U_Q - module.q_proj_adapter2.weight.data).item())
-        module.q_proj_adapter2.weight.data = U_Q
-        V_Q = U_Q.T @ (Q_weight - module.S_Q.data)
-        module.q_proj_adapter1.weight.data = V_Q
-        module.S_Q.data = -U_Q @ V_Q
-
-        #q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
-        q = args.lambda_s
-        module.S_Q.data[module.S_Q.data.abs() < q] = 0
-
-        U_V = torch.qr((V_weight - module.S_V.data) @ module.v_proj_adapter1.weight.data.T)[0]
-        module.v_proj_adapter2.weight.data = U_V
-        V_V = U_V.T @ (V_weight - module.S_V.data)
-        module.v_proj_adapter1.weight.data = V_V
-        module.S_V.data = -U_V @ V_V
-
-        #v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
-        v = args.lambda_s
-        module.S_V.data[module.S_V.data.abs() < v] = 0
-    
-    
-    U_Q_change_total.append(U_Q_change[0])
-  print(U_Q_change_total)
-
-  import torch.nn as nn
   for name, module in lm_net.named_modules():
-      if isinstance(module, Attention):
-        nn.init.normal_(module.q_proj_adapter1.weight, std=0.02)
-        module.q_proj_adapter2.weight.data.zero_()
-        nn.init.normal_(module.v_proj_adapter1.weight, std=0.02)
-        module.v_proj_adapter2.weight.data.zero_()
-        q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
-        v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
-        module.S_Q.data[module.S_Q.data.abs() < q] = 0
-        module.S_V.data[module.S_V.data.abs() < v] = 0
-        module.S_V.data = (module.S_V.data.abs() > 0).float()
-        module.S_Q.data = (module.S_Q.data.abs() > 0).float()
-        print(module.S_V.data.sum())
-        print(module.S_V.data.sum())
-        assert abs(module.S_V.data.sum() - 128) < 3
-        assert abs(module.S_V.data.sum() - 128) < 3
+    residual_change = []
+    if isinstance(module, Attention):
+      Q_weight = module.c_attn.weight[:, :module.split_size]
+      V_weight = module.c_attn.weight[:, 2*module.split_size:]
+      U_Q = torch.randn((module.q_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device)
+      V_Q = torch.randn((1, module.q_proj_adapter1.weight.data.shape[1])).to(Q_weight.device)
+      S_Q = module.S_Q.data
 
+      U_V = torch.randn((module.v_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device)
+      V_V = torch.randn((1, module.v_proj_adapter1.weight.data.shape[1])).to(Q_weight.device)
+      S_V = module.S_V.data
+      for rank in range(31):
+        for _ in range(args.compress_step):
+          U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
+          V_Q = U_Q.T @ (Q_weight - module.S_Q.data)
+          S_Q = Q_weight - U_Q @ V_Q
+          residual_change.append(torch.norm(Q_weight - U_Q@V_Q).item() / torch.norm(Q_weight))
+          q = args.lambda_s
+          S_Q[S_Q.abs() < q] = 0
+
+          U_V = torch.qr((V_weight - S_V) @ V_V.T)[0]
+          V_V = U_V.T @ (V_weight - module.S_V.data)
+          S_V = V_weight - U_V @ V_V
+          #residual_change.append(torch.norm(Q_weight - U_V@V_V).item())
+          q = args.lambda_s
+          S_V[S_V.abs() < q] = 0
+
+        E_Q = Q_weight - U_Q @ V_Q - S_Q
+        E_V = V_weight - U_V @ V_V - S_V
+        E_Q_vector = torch.qr(E_Q)[1][:1]
+        E_V_vector = torch.qr(E_V)[1][:1]
+        
+        V_Q = torch.cat([V_Q, E_Q_vector])
+        V_V = torch.cat([V_V, E_V_vector])
+
+      #module.q_proj_adapter2.weight.data = U_Q
+      #module.q_proj_adapter1.weight.data = V_Q
+      module.S_Q.data = S_Q
+
+      #module.v_proj_adapter2.weight.data = U_V
+      #module.v_proj_adapter1.weight.data = V_V
+      module.S_V.data = S_V
+
+      q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
+      v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
+      module.S_V.data = (module.S_V.data.abs() > q).float()
+      module.S_Q.data = (module.S_Q.data.abs() > v).float()
 
   try:
     train_step = 0
