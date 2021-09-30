@@ -1,5 +1,5 @@
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 python -m torch.distributed.launch --nproc_per_node=4 --master_port=8285 src/gpt2_ft.py \
+CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 python -m torch.distributed.launch --nproc_per_node=4 --master_port=18285 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
     --valid_data ./data/e2e/valid.jsonl \
     --train_batch_size 2 \
@@ -26,7 +26,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 python -m torch.distributed.laun
     --random_seed 110 \
     --save_interval 10000 > 0929_bilateral_smooth_rank6.out &
 
-CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 python -m torch.distributed.launch --nproc_per_node=4 --master_port=8286 src/gpt2_ft.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 python -m torch.distributed.launch --nproc_per_node=4 --master_port=18286 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
     --valid_data ./data/e2e/valid.jsonl \
     --train_batch_size 2 \
@@ -53,7 +53,7 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 python -m torch.distributed.laun
     --random_seed 110 \
     --save_interval 10000 > 0929_bilateral_smooth_rank8.out &
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 python -m torch.distributed.launch --nproc_per_node=4 --master_port=8281 src/gpt2_ft.py \
+CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 python -m torch.distributed.launch --nproc_per_node=4 --master_port=18281 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
     --valid_data ./data/e2e/valid.jsonl \
     --train_batch_size 2 \
@@ -80,7 +80,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 python -m torch.distributed.laun
     --random_seed 110 \
     --save_interval 10000 > 0929_bilateral_smooth_rank16.out &
 
-CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 python -m torch.distributed.launch --nproc_per_node=4 --master_port=8281 src/gpt2_ft.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 python -m torch.distributed.launch --nproc_per_node=4 --master_port=18281 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
     --valid_data ./data/e2e/valid.jsonl \
     --train_batch_size 2 \
