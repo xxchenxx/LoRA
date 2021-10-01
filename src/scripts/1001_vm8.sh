@@ -23,9 +23,9 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 nohup python -m torch.distribute
     --label_smooth 0.1 \
     --work_dir ./trained_models/GPT2_M_bilateral_smooth_rank32_seed110/e2e \
     --random_seed 110 \
-    --save_interval 10000 > 1001_bilateral_smooth_rank32.out &
+    --save_interval 10000 > 1001_bilateral_smooth_rank32.out
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=8281 src/gpt2_ft.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=8281 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
     --valid_data ./data/e2e/valid.jsonl \
     --train_batch_size 2 \
@@ -50,7 +50,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 nohup python -m torch.distribute
     --label_smooth 0.1 \
     --work_dir ./trained_models/GPT2_M_bilateral_smooth_rank16_seed110/e2e \
     --random_seed 110 \
-    --save_interval 10000 > 1001_bilateral_smooth_rank16.out &
+    --save_interval 10000 > 1001_bilateral_smooth_rank16.out
 
 CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=8281 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
@@ -77,9 +77,9 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 nohup python -m torch.distribute
     --label_smooth 0.1 \
     --work_dir ./trained_models/GPT2_M_bilateral_smooth_rank8_seed110/e2e \
     --random_seed 110 \
-    --save_interval 10000 > 1001_bilateral_smooth_rank8.out &
+    --save_interval 10000 > 1001_bilateral_smooth_rank8.out
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=8281 src/gpt2_ft.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=8281 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
     --valid_data ./data/e2e/valid.jsonl \
     --train_batch_size 2 \
@@ -104,7 +104,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 nohup python -m torch.distribute
     --label_smooth 0.1 \
     --work_dir ./trained_models/GPT2_M_bilateral_smooth_rank6_seed110/e2e \
     --random_seed 110 \
-    --save_interval 10000 > 1001_bilateral_smooth_rank6.out  &
+    --save_interval 10000 > 1001_bilateral_smooth_rank6.out 
 
 git checkout main 
 
@@ -133,10 +133,10 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 nohup python -m torch.distribute
     --label_smooth 0.1 \
     --work_dir ./trained_models/GPT2_M_rank32_seed110/e2e \
     --random_seed 110 \
-    --save_interval 10000 > 1001_rank32.out &
+    --save_interval 10000 > 1001_rank32.out
 
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=18281 src/gpt2_ft.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 NCCL_P2P_DISABLE=1 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=18281 src/gpt2_ft.py \
     --train_data ./data/e2e/train.jsonl \
     --valid_data ./data/e2e/valid.jsonl \
     --train_batch_size 2 \
@@ -161,4 +161,4 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 NCCL_P2P_DISABLE=1 nohup python -m torch.distribute
     --label_smooth 0.1 \
     --work_dir ./trained_models/GPT2_M_rank4_seed110/e2e \
     --random_seed 110 \
-    --save_interval 10000 > 1001_rank4.out &
+    --save_interval 10000 > 1001_rank4.out
