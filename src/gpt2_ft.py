@@ -313,15 +313,15 @@ if __name__ == '__main__':
   for name, module in lm_net.named_modules():
     residual_change = []
     if isinstance(module, Attention):
-      Q_weight = module.c_attn.weight[:, :module.split_size]
-      V_weight = module.c_attn.weight[:, 2*module.split_size:]
-      U_Q = torch.randn((module.q_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device)
-      V_Q = torch.randn((1, module.q_proj_adapter1.weight.data.shape[1])).to(Q_weight.device)
-      S_Q = module.S_Q.data
+      Q_weight = module.c_attn.weight[:, :module.split_size].detach()
+      V_weight = module.c_attn.weight[:, 2*module.split_size:].detach()
+      U_Q = torch.randn((module.q_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device).detach()
+      V_Q = torch.randn((1, module.q_proj_adapter1.weight.data.shape[1])).to(Q_weight.device).detach()
+      S_Q = module.S_Q.data.detach()
 
-      U_V = torch.randn((module.v_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device)
-      V_V = torch.randn((1, module.v_proj_adapter1.weight.data.shape[1])).to(Q_weight.device)
-      S_V = module.S_V.data
+      U_V = torch.randn((module.v_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device).detach()
+      V_V = torch.randn((1, module.v_proj_adapter1.weight.data.shape[1])).to(Q_weight.device).detach()
+      S_V = module.S_V.data.detach()
       for rank in range(31):
         for _ in range(args.compress_step):
           U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
