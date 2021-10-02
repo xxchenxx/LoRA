@@ -1,4 +1,4 @@
-CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8761 src/gpt2_beam.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8761 src/gpt2_beam.py \
     --data ./data/e2e/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
@@ -17,7 +17,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_pe
     --output_file predict.26289.b10p08.jsonl &
 
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8762 src/gpt2_beam.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8762 src/gpt2_beam.py \
     --data ./data/e2e/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
@@ -35,7 +35,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_pe
     --work_dir ./trained_models/GPT2_M_bilateral_smooth_rank16_seed110 \
     --output_file predict.26289.b10p08.jsonl &
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8763 src/gpt2_beam.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8763 src/gpt2_beam.py \
     --data ./data/e2e/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
@@ -53,7 +53,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_pe
     --work_dir ./trained_models/GPT2_M_bilateral_smooth_rank8_seed110 \
     --output_file predict.26289.b10p08.jsonl
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8764 src/gpt2_beam.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8764 src/gpt2_beam.py \
     --data ./data/e2e/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
@@ -71,7 +71,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_pe
     --work_dir ./trained_models/GPT2_M_bilateral_smooth_rank6_seed110 \
     --output_file predict.26289.b10p08.jsonl &
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8765 src/gpt2_beam.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8765 src/gpt2_beam.py \
     --data ./data/e2e/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
@@ -91,7 +91,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_pe
 
 git checkout main
 
-CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8766 src/gpt2_beam.py \
+CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8766 src/gpt2_beam.py \
     --data ./data/e2e/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
