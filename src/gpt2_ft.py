@@ -354,8 +354,8 @@ if __name__ == '__main__':
       #module.v_proj_adapter1.weight.data = V_V
       module.S_V.data = S_V
 
-      q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 128)
-      v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 128)
+      q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 64)
+      v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 64)
       module.S_V.data = (module.S_V.data.abs() > q).float()
       module.S_Q.data = (module.S_Q.data.abs() > v).float()
 
