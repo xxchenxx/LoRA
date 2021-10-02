@@ -315,13 +315,13 @@ if __name__ == '__main__':
     if isinstance(module, Attention):
       Q_weight = module.c_attn.weight[:, :module.split_size]
       V_weight = module.c_attn.weight[:, 2*module.split_size:]
-      U_Q = torch.randn((module.q_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device)
-      V_Q = torch.randn((1, module.q_proj_adapter1.weight.data.shape[1])).to(Q_weight.device)
-      S_Q = module.S_Q.data
+      U_Q = torch.randn((module.q_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device).detach().cpu()
+      V_Q = torch.randn((1, module.q_proj_adapter1.weight.data.shape[1])).to(Q_weight.device).detach().cpu()
+      S_Q = module.S_Q.data.detach().cpu()
 
-      U_V = torch.randn((module.v_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device)
-      V_V = torch.randn((1, module.v_proj_adapter1.weight.data.shape[1])).to(Q_weight.device)
-      S_V = module.S_V.data
+      U_V = torch.randn((module.v_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device).detach().cpu()
+      V_V = torch.randn((1, module.v_proj_adapter1.weight.data.shape[1])).to(Q_weight.device).detach().cpu()
+      S_V = module.S_V.data.detach().cpu()
       for rank in range(31):
         for _ in range(args.compress_step):
           U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
@@ -348,11 +348,11 @@ if __name__ == '__main__':
 
       #module.q_proj_adapter2.weight.data = U_Q
       #module.q_proj_adapter1.weight.data = V_Q
-      module.S_Q.data = S_Q
+      module.S_Q.data = S_Q.to(module.S_Q.data.device)
 
       #module.v_proj_adapter2.weight.data = U_V
       #module.v_proj_adapter1.weight.data = V_V
-      module.S_V.data = S_V
+      module.S_V.data = S_V.to(module.S_Q.data.device)
 
       q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - 64)
       v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - 64)
