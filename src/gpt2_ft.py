@@ -275,6 +275,36 @@ if __name__ == '__main__':
   if args.init_checkpoint is not None:
     print('loading model pretrained weight.')
     lm_net.load_weight(torch.load(args.init_checkpoint))  
+
+  lm_net = lm_net.cuda()
+
+  if args.lora_dim == 0:
+    optimizer = create_adam_optimizer_from_args(lm_net, args)
+    # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
+  else:
+    for n, p in lm_net.named_parameters():
+      if 'adapter' in n or 'embedding' in n:
+        print(f'{n}, shape: {p.shape}')
+      else:
+        p.requires_grad = False
+
+    optimizer_grouped_parameters = [
+        {
+            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'embedding' in n],
+        }
+    ]
+    optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
+    #None, args.lr, args.weight_decay, optimizer_grouped_parameters=optimizer_grouped_parameters, correct_bias=True, adam_epislon=1.0e-6)
+
+  if args.max_step is None:
+    args.max_step = (args.max_epoch * train_data.num_batches + args.world_size - 1) // args.world_size
+    print('set max_step:', args.max_step)
+
+  scheduler = create_optimizer_scheduler(optimizer, args)
+  if args.fp16:
+    lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
+  lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
+
   for name, module in lm_net.named_modules():
     if isinstance(module, Attention):
       module.S_Q.data = torch.zeros(1024, 1024).to(module.S_Q.device)
