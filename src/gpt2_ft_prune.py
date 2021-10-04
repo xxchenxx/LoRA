@@ -342,7 +342,7 @@ if __name__ == '__main__':
   current_state_dict = lm_net.state_dict()
   for name in list(original_state_dict.keys()):
     if 'c_attn' in name and 'weight' in name:
-      original_state_dict[name + "_orig"] = original_state_dict[name]
+      original_state_dict[name + "_orig"] = copy.deepcopy(original_state_dict[name])
       original_state_dict[name + "_mask"] = current_state_dict[name + "_mask"]
       del original_state_dict[name]
   print(original_state_dict.keys())
