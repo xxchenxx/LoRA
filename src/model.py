@@ -932,7 +932,14 @@ class GPT2LMModel(nn.Module):
 
         if 'model_state_dict' in state_dict:
             state_dict = state_dict['model_state_dict']
-    
+
+        for key in list(state_dict.keys()):
+            if 'orig' in key:
+                print(key)
+                state_dict[key[:-5]] = state_dict[key[:-5] + '_mask'] * state_dict[key]
+                del state_dict[key]
+                del state_dict[key[:-5] + "_mask"]
+
         old_keys = []
         new_keys = []
         for key in state_dict.keys():
