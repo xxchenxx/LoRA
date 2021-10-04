@@ -5,7 +5,7 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_pe
 
 
 CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=8766 src/gpt2_beam.py \
-    --data ./data/e2e/test.jsonl \
+    --data ./data/dart/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
     --eval_len 64 \
@@ -22,8 +22,8 @@ CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_pe
     --work_dir ./trained_models/GPT2_M_dart_rank_3 \
     --output_file predict.39160.b10p08.jsonl &
 
-    CUDA_VISIBLE_DEVICES=0,1,2,3 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=8767 src/gpt2_beam.py \
-    --data ./data/e2e/test.jsonl \
+    CUDA_VISIBLE_DEVICES=4,5,6,7 nohup python -m torch.distributed.launch --nproc_per_node=4 --master_port=8767 src/gpt2_beam.py \
+    --data ./data/dart/test.jsonl \
     --batch_size 1 \
     --seq_len 512 \
     --eval_len 64 \
