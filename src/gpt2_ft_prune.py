@@ -344,6 +344,8 @@ if __name__ == '__main__':
     if 'c_attn' in name and 'weight' in name:
       original_state_dict[name + "_orig"] = original_state_dict[name]
       original_state_dict[name + "_mask"] = current_state_dict[name + "_mask"]
+      del original_state_dict[name]
+  print(original_state_dict.keys())
   lm_net.load_state_dict(original_state_dict)
 
   def check_sparsity(model, conv1=True):
