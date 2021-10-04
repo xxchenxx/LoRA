@@ -313,11 +313,11 @@ if __name__ == '__main__':
   for name, module in lm_net.named_modules():
     
     if isinstance(module, Attention):
-      weight = module.c_attn.weight
+      weight = module.c_attn.weight.data
       weight[:, :module.split_size] = weight[:, :module.split_size] + (module.q_proj_adapter2.weight.data @ module.q_proj_adapter1.weight)
       weight[:, 2*module.split_size:] = weight[:, 2*module.split_size:] + (module.v_proj_adapter2.weight.data @ module.v_proj_adapter1.weight)
       
-      module.c_attn.weight = weight
+      module.c_attn.weight.data = weight
 
 
   def pruning_model(model, px):
