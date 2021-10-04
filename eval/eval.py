@@ -146,8 +146,8 @@ def meteor_score(references, hypothesis, num_refs, lng='en'):
     linear_references = []
     for refs in references:
         for i in range(num_refs):
-            linear_references.append(refs[i])
-
+            if len(refs[i]) > 0:
+                linear_references.append(refs[i])
     with codecs.open(refs_tmp, 'w', 'utf-8') as f:
         f.write('\n'.join(linear_references))
 
