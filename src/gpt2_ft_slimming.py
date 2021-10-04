@@ -302,6 +302,8 @@ if __name__ == '__main__':
     config = GPT2Config(n_embd=1280, n_layer=36, n_head=20, lora_attn_dim=args.lora_dim, lora_attn_alpha=args.lora_alpha, lora_dropout=args.lora_dropout,
                         prefix_len=args.prefix_len, infix_len=args.infix_len)
 
+
+  config.self_slimming = True
   lm_net = GPT2LMModel(config)
   if args.init_checkpoint is not None:
     print('loading model pretrained weight.')
@@ -314,14 +316,14 @@ if __name__ == '__main__':
     # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
   else:
     for n, p in lm_net.named_parameters():
-      if 'adapter' in n:
+      if 'adapter' in n or 'coef' in n:
         print(f'{n}, shape: {p.shape}')
       else:
         p.requires_grad = False
 
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
+            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'coef' in n],
         }
     ]
     optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)

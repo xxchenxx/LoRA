@@ -115,7 +115,7 @@ class Attention(nn.Module):
         self.key = Conv1D(n_state, nx)
         #self.c_attn = Conv1D(n_state * 3, nx)
         self.c_proj = Conv1D(n_state, nx)
-
+        self.self_slimming = config.self_slimming
         #self.lora_dropout = config.lora_dropout
 
         self.config = config
@@ -130,7 +130,6 @@ class Attention(nn.Module):
 
         self.lora_attn_dim = config.lora_attn_dim 
         self.lora_attn_alpha = config.lora_attn_alpha
-        self.self_slimming = True
         self.pruned_heads = set()
         if self.lora_attn_dim > 0:
             self.q_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
