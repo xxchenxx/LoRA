@@ -62,6 +62,6 @@ CUDA_VISIBLE_DEVICES=1 nohup python -m torch.distributed.launch --nproc_per_node
 
 
 
-python src/gpt2_decode.py     --vocab ./vocab     --sample_file ./trained_models/GPT2_M_e2e_rank_2_unstructure_0.3/predict.21031.b10p08.jsonl     --input_file ./data/e2e/test_formatted.jsonl     --output_ref_file e2e_ref.txt     --output_pred_file e2e_pred.txt
+python src/gpt2_decode.py     --vocab ./vocab     --sample_file ./trained_models/GPT2_M_e2e_rank_2_unstructure_0.5/predict.21042.b10p08.jsonl     --input_file ./data/e2e/test_formatted.jsonl     --output_ref_file e2e_ref.txt     --output_pred_file e2e_pred.txt
 
 python eval/e2e/measure_scores.py e2e_ref.txt e2e_pred.txt -p
