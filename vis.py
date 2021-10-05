@@ -19,7 +19,7 @@ for key in trained:
         #diff.append((init[key] - trained[key]).numpy())
     print(np.abs((init[new_key] - trained[key]).numpy()).mean())
     with open("diff.txt", "w") as f:
-        f.write(str(list((init[new_key] - trained[key]).numpy().reshape(-1)))[1:-1])
+        f.write(str(list((init[new_key] - trained[key]).numpy().reshape(-1)))[1:-1].replace(",","\n"))
     break
 
 
