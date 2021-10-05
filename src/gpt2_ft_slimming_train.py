@@ -325,7 +325,18 @@ if __name__ == '__main__':
   try:
     train_step = 0
     attention_modules = []
-    slimming_coefs = np.load('self_slimming_coef_records.npy')
+    checkpoint = torch.load(args.init_checkpoint, map_location="cpu")['model_state_dict']
+    slimming_coefs = []
+    count = 0
+    print(checkpoint.keys())
+    for k in checkpoint:
+        if 'slimming_coef' in k:
+            slimming_coefs.append(checkpoint[k].detach().view(-1).numpy())
+            count += 1
+
+    print(count)
+    slimming_coefs = np.stack(slimming_coefs)
+    print(slimming_coefs.shape)
     for m in lm_net.modules():
         if isinstance(m, Attention):
             attention_modules.append(m)
