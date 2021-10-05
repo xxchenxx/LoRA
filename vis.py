@@ -7,6 +7,8 @@ trained = torch.load("./trained_models/GPT2_M_original/e2e/model.105155.pt",  ma
 print(init.keys())
 print(trained.keys())
 for key in trained:
+    if not 'c_attn' in key:
+        continue
     if key.startswith('module.transformer.'):
         new_key = key[19:]
     else:
