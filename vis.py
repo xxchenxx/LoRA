@@ -6,7 +6,7 @@ trained = torch.load("./trained_models/GPT2_M_original/e2e/model.105155.pt",  ma
 diff = []
 for key in init:
     diff.append((init[key] - trained[key]).numpy())
-    print(np.abs((init[key] - trained[key]).numpy()))
+    print(np.abs((init[key] - trained[key]).numpy()).mean())
 
 
 
