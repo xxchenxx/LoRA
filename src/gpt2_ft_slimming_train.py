@@ -318,10 +318,6 @@ if __name__ == '__main__':
     print('set max_step:', args.max_step)
 
   scheduler = create_optimizer_scheduler(optimizer, args)
-  if args.fp16:
-    lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
-  lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc, find_unused_parameters=True)
-
   try:
     train_step = 0
     attention_modules = []
@@ -349,6 +345,9 @@ if __name__ == '__main__':
         #print()
         m.prune_heads(pruned_heads)
         m.self_slimming = False
+    if args.fp16:
+      lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
+    lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc, find_unused_parameters=True)
     for epoch in itertools.count(start=1):
       #def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
       train_step = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, train_step=train_step, epoch = epoch)
