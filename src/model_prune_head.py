@@ -135,12 +135,12 @@ class Attention(nn.Module):
         if self.lora_attn_dim > 0:
             self.q_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
             nn.init.normal_(self.q_proj_adapter1.weight, std=0.02)
-            self.q_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx // 2, bias=False)
+            self.q_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.q_proj_adapter2.weight.data.zero_()
 
             self.v_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
             nn.init.normal_(self.v_proj_adapter1.weight, std=0.02)
-            self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx // 2, bias=False)
+            self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.v_proj_adapter2.weight.data.zero_()
 
             self.q_moe_adapter1 = None
