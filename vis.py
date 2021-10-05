@@ -4,6 +4,8 @@ init = torch.load("./pretrained_checkpoints/gpt2-medium-pytorch_model.bin", map_
 trained = torch.load("./trained_models/GPT2_M_original/e2e/model.105155.pt",  map_location="cpu")['model_state_dict']
 
 #diff = []
+print(init.keys())
+print(trained.keys())
 for key in trained:
     if key.startswith('module'):
         new_key = key[7:]
