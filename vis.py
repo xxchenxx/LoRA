@@ -6,10 +6,13 @@ trained = torch.load("./trained_models/GPT2_M_original/e2e/model.105155.pt",  ma
 #diff = []
 for key in trained:
     if key.startswith('module'):
-        key = key[7:]
+        new_key = key[7:]
+    else:
+        new_key = key
     try:
+
         #diff.append((init[key] - trained[key]).numpy())
-        print(np.abs((init[key] - trained[key]).numpy()).mean())
+        print(np.abs((init[new_key] - trained[key]).numpy()).mean())
     except:
         pass
 
