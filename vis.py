@@ -6,6 +6,7 @@ trained = torch.load("./trained_models/GPT2_M_original/e2e/model.105155.pt",  ma
 #diff = []
 print(init.keys())
 print(trained.keys())
+import matplotlib.pyplot as plt
 for key in trained:
     if not 'c_attn' in key:
         continue
@@ -17,9 +18,9 @@ for key in trained:
 
         #diff.append((init[key] - trained[key]).numpy())
     print(np.abs((init[new_key] - trained[key]).numpy()).mean())
+    with open("diff.txt", "w") as f:
+        f.write(list((init[new_key] - trained[key]).numpy()))
     break
-    
-
 
 
 
