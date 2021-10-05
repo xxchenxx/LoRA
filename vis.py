@@ -9,13 +9,11 @@ for key in trained:
         new_key = key[7:]
     else:
         new_key = key
-    try:
+    
 
         #diff.append((init[key] - trained[key]).numpy())
-        print(np.abs((init[new_key] - trained[key]).numpy()).mean())
-    except:
-        pass
-
+    print(np.abs((init[new_key] - trained[key]).numpy()).mean())
+    
 
 
 
