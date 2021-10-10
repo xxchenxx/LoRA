@@ -166,19 +166,13 @@ class Attention(nn.Module):
         self.attention_head_size = self.split_size // self.n_head
         mask = torch.ones(self.n_head, self.split_size // self.n_head)
         heads = set(heads) - self.pruned_heads  # Convert to set and remove already pruned heads
-        if self.self_slimming:
-            slimming_mask = torch.ones(self.n_head)
+
         for head in heads:
             # Compute how many pruned heads are before the head and move the index accordingly
             head = head - sum(1 if h < head else 0 for h in self.pruned_heads)
             mask[head] = 0
-            if self.self_slimming:
-                slimming_mask[head] = 0
         mask = mask.view(-1).contiguous().eq(1)
         index = torch.arange(len(mask))[mask].long()
-        if self.self_slimming:
-            slimming_mask = slimming_mask.view(-1).contiguous().eq(1)
-            slimming_index = torch.arange(len(slimming_mask))[slimming_mask].long()
 
         # Prune linear layers
         self.query = prune_linear_layer(self.query, index)
@@ -193,13 +187,6 @@ class Attention(nn.Module):
         self.n_head = self.n_head - len(heads)
         self.all_head_size = self.attention_head_size * self.n_head
         self.pruned_heads = self.pruned_heads.union(heads)
-
-        if self.self_slimming:
-            
-            slimming_index = slimming_index.to(self.slimming_coef.device)
-            new_data = self.slimming_coef.data.index_select(1, slimming_index).clone().detach()
-            with torch.no_grad():
-                self.slimming_coef = nn.Parameter(new_data)
             # self.slimming_coef = self.slimming_coef[:,index,:,:]
 
     def _attn(self, q, k, v, len_kv = None):
