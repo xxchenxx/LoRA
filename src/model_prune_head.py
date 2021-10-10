@@ -171,6 +171,7 @@ class Attention(nn.Module):
             # Compute how many pruned heads are before the head and move the index accordingly
             head = head - sum(1 if h < head else 0 for h in self.pruned_heads)
             mask[head] = 0
+        remain = mask[:, 0].contiguous().eq(1)
         mask = mask.view(-1).contiguous().eq(1)
         index = torch.arange(len(mask))[mask].long()
 
@@ -188,7 +189,7 @@ class Attention(nn.Module):
         self.all_head_size = self.attention_head_size * self.n_head
         self.pruned_heads = self.pruned_heads.union(heads)
         print(index)
-        self.slimming_coef = self.slimming_coef[:,index,:,:]
+        self.slimming_coef = self.slimming_coef[:,remain,:,:]
 
     def _attn(self, q, k, v, len_kv = None):
         w = torch.matmul(q, k)
