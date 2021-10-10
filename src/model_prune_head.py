@@ -72,6 +72,28 @@ class Conv1D(nn.Module):
         x = x.view(*size_out)
         return x
 
+def prune_conv1d(layer, index, dim=1):
+    index = index.to(layer.weight.device)
+    #print(index)
+    
+    W = layer.weight.index_select(dim, index).clone().detach()
+    if layer.bias is not None:
+        if dim == 1:
+            b = layer.bias.clone().detach()
+        else:
+            b = layer.bias[index].clone().detach()
+    new_size = list(layer.weight.size())
+    new_size[dim] = len(index)
+    new_layer = Conv1D(new_size[0], new_size[1]).to(layer.weight.device)
+    new_layer.weight.requires_grad = False
+    new_layer.weight.copy_(W.contiguous())
+    new_layer.weight.requires_grad = True
+    print(new_layer.weight.shape)
+    if layer.bias is not None:
+        new_layer.bias.requires_grad = False
+        new_layer.bias.copy_(b.contiguous())
+        new_layer.bias.requires_grad = True
+    return new_layer
 
 def prune_linear_layer(layer, index, dim=0):
     """ Prune a linear layer (a model parameters) to keep only entries in index.
@@ -175,10 +197,10 @@ class Attention(nn.Module):
         index = torch.arange(len(mask))[mask].long()
 
         # Prune linear layers
-        self.query = prune_linear_layer(self.query, index)
-        self.key = prune_linear_layer(self.key, index)
-        self.value = prune_linear_layer(self.value, index)
-        self.c_proj = prune_linear_layer(self.c_proj, index, dim=1)
+        self.query = prune_conv1d(self.query, index)
+        self.key = prune_conv1d(self.key, index)
+        self.value = prune_conv1d(self.value, index)
+        self.c_proj = prune_conv1d(self.c_proj, index, dim=1)
         #self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
         #print(index)
         self.v_proj_adapter2.weight.data = self.v_proj_adapter2.weight.data.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
