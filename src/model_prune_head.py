@@ -1019,6 +1019,7 @@ class GPT2LMModel(nn.Module):
         for old_key, new_key in zip(old_keys, new_keys):
             state_dict[new_key] = state_dict.pop(old_key)
 
+        print(state_dict.keys())
         self.transformer.load_state_dict(state_dict, strict=False)
         self.set_tied()
         

@@ -27,18 +27,18 @@ CUDA_VISIBLE_DEVICES=1 nohup python -m torch.distributed.launch --nproc_per_node
 
 python src/gpt2_decode.py \
     --vocab ./vocab \
-    --sample_file ./trained_models/GPT2_M_webnlg_challenge_2017_rank_2_slim_train/predict.18026.0.25.b10p08.jsonl \
-    --input_file ./data/webnlg_challenge_2017/test_formatted.jsonl \
-    --ref_type webnlg \
+    --sample_file ./trained_models/GPT2_M_dart_rank_2_unstructure_0.5/predict.62660.b10p08.jsonl \
+    --input_file ./data/dart/test_formatted.jsonl \
+    --ref_type dart \
     --ref_num 6 \
-    --output_ref_file eval/GenerationEval/data/references_webnlg \
-    --output_pred_file eval/GenerationEval/data/hypothesis_webnlg \
+    --output_ref_file eval/GenerationEval/data/references_dart \
+    --output_pred_file eval/GenerationEval/data/hypothesis_dart \
     --tokenize --lower
 
 cd ./eval/GenerationEval/
 python eval.py \
-    -R data/references_webnlg/reference \
-    -H data/hypothesis_webnlg \
+    -R data/references_dart/reference \
+    -H data/hypothesis_dart \
     -nr 6 \
     -m bleu,meteor,ter 
 cd ../..

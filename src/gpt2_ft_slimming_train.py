@@ -344,7 +344,6 @@ if __name__ == '__main__':
         pruned_heads = [i for i in range(16) if mask[i] == 0]
         #print()
         m.prune_heads(pruned_heads)
-        m.self_slimming = False
     if args.fp16:
       lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
     lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc, find_unused_parameters=True)
