@@ -338,11 +338,11 @@ if __name__ == '__main__':
         if isinstance(m, Attention):
             attention_modules.append(m)
     quantile_axis = -1
-    threshold = np.quantile(slimming_coefs, 0.0/12, axis=quantile_axis, keepdims=True)
+    threshold = np.quantile(slimming_coefs, 0.25, axis=quantile_axis, keepdims=True)
     layers_masks = slimming_coefs > threshold
     layers_masks = [layers_masks[i] for i in range(layers_masks.shape[0])]
     for m, mask in zip(attention_modules, layers_masks):
-        pruned_heads = []
+        pruned_heads = [i for i in range(16) if mask[i] == 0]
         #print()
         m.prune_heads(pruned_heads)
     if args.fp16:
