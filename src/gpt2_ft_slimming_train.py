@@ -322,6 +322,7 @@ if __name__ == '__main__':
     train_step = 0
     attention_modules = []
     checkpoint = torch.load(args.init_checkpoint, map_location="cpu")['model_state_dict']
+    
     slimming_coefs = []
     count = 0
     print(checkpoint.keys())
