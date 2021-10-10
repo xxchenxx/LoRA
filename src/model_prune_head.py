@@ -184,7 +184,7 @@ class Attention(nn.Module):
         #self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
         #print(index)
         self.v_proj_adapter2.weight.data = self.v_proj_adapter2.weight.data.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
-        self.q_proj_adapter2.weight.data = self.q_proj_adapter2.weight.data.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
+        self.q_proj_adapter2.weight.data = self.q_proj_adapter2.weight.data.index_select(0, index.to(self.q_proj_adapter2.weight.data.device)).clone().detach()
         # Update hyper params and store pruned heads
         self.n_head = self.n_head - len(heads)
         self.all_head_size = self.attention_head_size * self.n_head
