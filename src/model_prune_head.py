@@ -78,7 +78,7 @@ def prune_conv1d(layer, index, dim=1):
     
     W = layer.weight.index_select(dim, index).clone().detach()
     if layer.bias is not None:
-        if dim == 1:
+        if dim == 0:
             b = layer.bias.clone().detach()
         else:
             b = layer.bias[index].clone().detach()
