@@ -117,7 +117,7 @@ CUDA_VISIBLE_DEVICES=2 nohup python -m torch.distributed.launch --nproc_per_node
     --eval_len 64 \
     --model_card gpt2.md \
     --init_checkpoint ./trained_models/GPT2_M_e2e_rank_2_slim_train/model.105155.pt \
-    --coef_checkpoint ./trained_models/GPT2_M_e2e_rank_2_slim/model.105155.pt \
+    --coef_checkpoint ./GPT2_M_e2e_rank_2_slim/model.105155.pt \
     --platform local \
     --lora_dim 2 \
     --lora_alpha 32 \
