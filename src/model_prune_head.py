@@ -84,7 +84,7 @@ def prune_conv1d(layer, index, dim=1):
             b = layer.bias[index].clone().detach()
     new_size = list(layer.weight.size())
     new_size[dim] = len(index)
-    new_layer = Conv1D(new_size[0], new_size[1]).to(layer.weight.device)
+    new_layer = Conv1D(new_size[1], new_size[0]).to(layer.weight.device)
     new_layer.weight.requires_grad = False
     new_layer.weight.copy_(W.contiguous())
     new_layer.weight.requires_grad = True
@@ -200,7 +200,7 @@ class Attention(nn.Module):
         self.query = prune_conv1d(self.query, index)
         self.key = prune_conv1d(self.key, index)
         self.value = prune_conv1d(self.value, index)
-        self.c_proj = prune_conv1d(self.c_proj, index, dim=1)
+        self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
         #self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
         #print(index)
         self.v_proj_adapter2.weight.data = self.v_proj_adapter2.weight.data.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
