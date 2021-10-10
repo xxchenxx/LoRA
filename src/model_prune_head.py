@@ -189,7 +189,7 @@ class Attention(nn.Module):
         self.all_head_size = self.attention_head_size * self.n_head
         self.pruned_heads = self.pruned_heads.union(heads)
         print(index)
-        self.slimming_coef = self.slimming_coef[:,remain,:,:]
+        self.slimming_coef.data = self.slimming_coef.data[:,remain,:,:]
 
     def _attn(self, q, k, v, len_kv = None):
         w = torch.matmul(q, k)
