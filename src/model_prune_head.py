@@ -80,7 +80,7 @@ def prune_linear_layer(layer, index, dim=0):
     """
     index = index.to(layer.weight.device)
     #print(index)
-    print(layer.weight.shape)
+    
     W = layer.weight.index_select(dim, index).clone().detach()
     if layer.bias is not None:
         if dim == 1:
@@ -93,6 +93,7 @@ def prune_linear_layer(layer, index, dim=0):
     new_layer.weight.requires_grad = False
     new_layer.weight.copy_(W.contiguous())
     new_layer.weight.requires_grad = True
+    print(new_layer.weight.shape)
     if layer.bias is not None:
         new_layer.bias.requires_grad = False
         new_layer.bias.copy_(b.contiguous())
@@ -188,7 +189,7 @@ class Attention(nn.Module):
         self.n_head = self.n_head - len(heads)
         self.all_head_size = self.attention_head_size * self.n_head
         self.pruned_heads = self.pruned_heads.union(heads)
-        print(index)
+        #print(index)
         self.slimming_coef.data = self.slimming_coef.data[:,remain,:,:]
 
     def _attn(self, q, k, v, len_kv = None):
