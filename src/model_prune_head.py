@@ -1004,7 +1004,7 @@ class GPT2LMModel(nn.Module):
         if isinstance(module, nn.Linear) and module.bias is not None:
             module.bias.data.zero_()
 
-    def load_weight(self, state_dict):
+    def load_weight(self, state_dict, strict=False):
 
         if 'model_state_dict' in state_dict:
             state_dict = state_dict['model_state_dict']
@@ -1030,6 +1030,6 @@ class GPT2LMModel(nn.Module):
             state_dict[new_key] = state_dict.pop(old_key)
 
         print(state_dict.keys())
-        self.transformer.load_state_dict(state_dict, strict=False)
+        self.transformer.load_state_dict(state_dict, strict=strict)
         self.set_tied()
         
