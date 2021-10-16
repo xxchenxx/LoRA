@@ -395,7 +395,6 @@ if __name__ == '__main__':
       pruned_heads = [i for i in range(16) if mask[i] == 0]
       print(pruned_heads)
       m.prune_heads(pruned_heads)
-      m.self_slimming = False
 
   if args.init_checkpoint is not None:
     print('loading model pretrained weight.')
