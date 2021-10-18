@@ -287,7 +287,7 @@ if __name__ == '__main__':
   elif args.model_card == 'gpt2.lg':
     config = GPT2Config(n_embd=1280, n_layer=36, n_head=20, lora_attn_dim=args.lora_dim, lora_attn_alpha=args.lora_alpha, lora_dropout=args.lora_dropout,
                         prefix_len=args.prefix_len, infix_len=args.infix_len)
-  config.self_slimming=True
+
   lm_net = GPT2LMModel(config)
   if args.init_checkpoint is not None:
     print('loading model pretrained weight.')
@@ -300,14 +300,14 @@ if __name__ == '__main__':
     # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
   else:
     for n, p in lm_net.named_parameters():
-      if 'adapter' in n or 'coef' in n:
+      if 'adapter' in n:
         print(f'{n}, shape: {p.shape}')
       else:
         p.requires_grad = False
 
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'coef' in n],
+            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
         }
     ]
     optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
@@ -318,26 +318,36 @@ if __name__ == '__main__':
     print('set max_step:', args.max_step)
 
   scheduler = create_optimizer_scheduler(optimizer, args)
-  if args.fp16:
-    lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
-  lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc, find_unused_parameters=True)
-
   try:
     train_step = 0
     attention_modules = []
-    slimming_coefs = np.load('self_slimming_coef_records.npy')
+    checkpoint = torch.load(args.init_checkpoint, map_location="cpu")['model_state_dict']
+    
+    slimming_coefs = []
+    count = 0
+    print(checkpoint.keys())
+    for k in checkpoint:
+        if 'slimming_coef' in k:
+            slimming_coefs.append(checkpoint[k].detach().view(-1).numpy())
+            count += 1
+
+    print(count)
+    slimming_coefs = np.stack(slimming_coefs)
+    print(slimming_coefs.shape)
     for m in lm_net.modules():
         if isinstance(m, Attention):
             attention_modules.append(m)
     quantile_axis = -1
-    threshold = np.quantile(slimming_coefs, 0.5, axis=quantile_axis, keepdims=True)
+    threshold = np.quantile(slimming_coefs, 1/16, axis=quantile_axis, keepdims=True)
     layers_masks = slimming_coefs > threshold
     layers_masks = [layers_masks[i] for i in range(layers_masks.shape[0])]
     for m, mask in zip(attention_modules, layers_masks):
         pruned_heads = [i for i in range(16) if mask[i] == 0]
         #print()
         m.prune_heads(pruned_heads)
-        m.self_slimming = False
+    if args.fp16:
+      lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
+    lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc, find_unused_parameters=True)
     for epoch in itertools.count(start=1):
       #def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
       train_step = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, train_step=train_step, epoch = epoch)
