@@ -287,8 +287,9 @@ if __name__ == '__main__':
   elif args.model_card == 'gpt2.lg':
     config = GPT2Config(n_embd=1280, n_layer=36, n_head=20, lora_attn_dim=args.lora_dim, lora_attn_alpha=args.lora_alpha, lora_dropout=args.lora_dropout,
                         prefix_len=args.prefix_len, infix_len=args.infix_len)
-
+  config.self_slimming = True
   lm_net = GPT2LMModel(config)
+  
   if args.init_checkpoint is not None:
     print('loading model pretrained weight.')
     lm_net.load_weight(torch.load(args.init_checkpoint))  
