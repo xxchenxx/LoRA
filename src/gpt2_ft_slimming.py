@@ -197,9 +197,9 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
       elapsed = time.time() - log_start_time
 
       log_str = '| epoch {:3d} step {:>8d} | {:>6d} batches | lr {:.3g}' \
-                '| ms/batch {:5.2f} | loss {:5.2f} | avg loss {:5.2f} | ppl {:5.2f}'.format(
+                '| ms/batch {:5.2f} | loss {:5.2f} | avg loss {:5.2f} | l1 loss {:5.2f} | ppl {:5.2f}'.format(
                 epoch, train_step, idx + 1, optimizer.param_groups[0]['lr'], 
-                elapsed * 1000 / args.log_interval, avg_lm_loss.val, avg_lm_loss.avg, math.exp(avg_lm_loss.avg)) 
+                elapsed * 1000 / args.log_interval, avg_lm_loss.val, avg_lm_loss.avg, l1_self_loss * l1_loss_self_coef, math.exp(avg_lm_loss.avg)) 
 
       if args.rank == 0: 
         print(log_str)
