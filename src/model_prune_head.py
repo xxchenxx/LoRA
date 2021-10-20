@@ -72,6 +72,28 @@ class Conv1D(nn.Module):
         x = x.view(*size_out)
         return x
 
+def prune_conv1d(layer, index, dim=1):
+    index = index.to(layer.weight.device)
+    #print(index)
+    
+    W = layer.weight.index_select(dim, index).clone().detach()
+    if layer.bias is not None:
+        if dim == 0:
+            b = layer.bias.clone().detach()
+        else:
+            b = layer.bias[index].clone().detach()
+    new_size = list(layer.weight.size())
+    new_size[dim] = len(index)
+    new_layer = Conv1D(new_size[1], new_size[0]).to(layer.weight.device)
+    new_layer.weight.requires_grad = False
+    new_layer.weight.copy_(W.contiguous())
+    new_layer.weight.requires_grad = True
+    print(new_layer.weight.shape)
+    if layer.bias is not None:
+        new_layer.bias.requires_grad = False
+        new_layer.bias.copy_(b.contiguous())
+        new_layer.bias.requires_grad = True
+    return new_layer
 
 def prune_linear_layer(layer, index, dim=0):
     """ Prune a linear layer (a model parameters) to keep only entries in index.
@@ -80,7 +102,7 @@ def prune_linear_layer(layer, index, dim=0):
     """
     index = index.to(layer.weight.device)
     #print(index)
-    print(layer.weight.shape)
+    
     W = layer.weight.index_select(dim, index).clone().detach()
     if layer.bias is not None:
         if dim == 1:
@@ -93,6 +115,7 @@ def prune_linear_layer(layer, index, dim=0):
     new_layer.weight.requires_grad = False
     new_layer.weight.copy_(W.contiguous())
     new_layer.weight.requires_grad = True
+    print(new_layer.weight.shape)
     if layer.bias is not None:
         new_layer.bias.requires_grad = False
         new_layer.bias.copy_(b.contiguous())
@@ -161,46 +184,33 @@ class Attention(nn.Module):
     
 
     def prune_heads(self, heads):
-        if len(heads) == 0:
-            return
         self.attention_head_size = self.split_size // self.n_head
         mask = torch.ones(self.n_head, self.split_size // self.n_head)
         heads = set(heads) - self.pruned_heads  # Convert to set and remove already pruned heads
-        if self.self_slimming:
-            slimming_mask = torch.ones(self.n_head)
+
         for head in heads:
             # Compute how many pruned heads are before the head and move the index accordingly
             head = head - sum(1 if h < head else 0 for h in self.pruned_heads)
             mask[head] = 0
-            if self.self_slimming:
-                slimming_mask[head] = 0
+        remain = mask[:, 0].contiguous().eq(1)
         mask = mask.view(-1).contiguous().eq(1)
         index = torch.arange(len(mask))[mask].long()
-        if self.self_slimming:
-            slimming_mask = slimming_mask.view(-1).contiguous().eq(1)
-            slimming_index = torch.arange(len(slimming_mask))[slimming_mask].long()
 
         # Prune linear layers
-        self.query = prune_linear_layer(self.query, index)
-        self.key = prune_linear_layer(self.key, index)
-        self.value = prune_linear_layer(self.value, index)
-        self.c_proj = prune_linear_layer(self.c_proj, index, dim=1)
+        self.query = prune_conv1d(self.query, index)
+        self.key = prune_conv1d(self.key, index)
+        self.value = prune_conv1d(self.value, index)
+        self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
         #self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
-        
-        self.v_proj_adapter2.weight.data = self.v_proj_adapter2.weight.data.index_select(0, index).clone().detach()
-        self.q_proj_adapter2.weight.data = self.q_proj_adapter2.weight.data.index_select(0, index).clone().detach()
+        #print(index)
+        self.v_proj_adapter2.weight.data = self.v_proj_adapter2.weight.data.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
+        self.q_proj_adapter2.weight.data = self.q_proj_adapter2.weight.data.index_select(0, index.to(self.q_proj_adapter2.weight.data.device)).clone().detach()
         # Update hyper params and store pruned heads
         self.n_head = self.n_head - len(heads)
         self.all_head_size = self.attention_head_size * self.n_head
         self.pruned_heads = self.pruned_heads.union(heads)
-
-        if self.self_slimming:
-            
-            slimming_index = slimming_index.to(self.slimming_coef.device)
-            new_data = self.slimming_coef.data.index_select(1, slimming_index).clone().detach()
-            with torch.no_grad():
-                self.slimming_coef = nn.Parameter(new_data)
-            # self.slimming_coef = self.slimming_coef[:,index,:,:]
+        #print(index)
+        self.slimming_coef.data = self.slimming_coef.data[:,remain,:,:]
 
     def _attn(self, q, k, v, len_kv = None):
         w = torch.matmul(q, k)
@@ -218,9 +228,9 @@ class Attention(nn.Module):
             _len = torch.arange(k.size(-1), device=k.device)
             _input_msk =  _len[None, :] >= (len_kv)[:, None]
             w = w.masked_fill(_input_msk.unsqueeze(1).unsqueeze(2), -1.0e10) 
+        w = nn.Softmax(dim=-1)(w)
         if self.self_slimming:
             w *= self.slimming_coef
-        w = nn.Softmax(dim=-1)(w)
         return torch.matmul(w, v)
 
     def merge_heads(self, x):
@@ -994,7 +1004,7 @@ class GPT2LMModel(nn.Module):
         if isinstance(module, nn.Linear) and module.bias is not None:
             module.bias.data.zero_()
 
-    def load_weight(self, state_dict):
+    def load_weight(self, state_dict, strict=False):
 
         if 'model_state_dict' in state_dict:
             state_dict = state_dict['model_state_dict']
@@ -1019,6 +1029,7 @@ class GPT2LMModel(nn.Module):
         for old_key, new_key in zip(old_keys, new_keys):
             state_dict[new_key] = state_dict.pop(old_key)
 
-        self.transformer.load_state_dict(state_dict, strict=False)
+        print(state_dict.keys())
+        self.transformer.load_state_dict(state_dict, strict=strict)
         self.set_tied()
         
