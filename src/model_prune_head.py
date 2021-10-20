@@ -228,9 +228,9 @@ class Attention(nn.Module):
             _len = torch.arange(k.size(-1), device=k.device)
             _input_msk =  _len[None, :] >= (len_kv)[:, None]
             w = w.masked_fill(_input_msk.unsqueeze(1).unsqueeze(2), -1.0e10) 
+        w = nn.Softmax(dim=-1)(w)
         if self.self_slimming:
             w *= self.slimming_coef
-        w = nn.Softmax(dim=-1)(w)
         return torch.matmul(w, v)
 
     def merge_heads(self, x):
