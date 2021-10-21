@@ -180,7 +180,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     #        self_slimming_coef_records[idx_layer].append(m.slimming_coef.detach().cpu().numpy().reshape(-1))
     #        idx_layer += 1
     #print(self_slimming_coef_records)
-    l1_loss_self_coef = 5e-5
+    l1_loss_self_coef = 1e-5
     if l1_loss_self_coef > 0.0:
         l1_self_loss = 0.0
         for m in model.modules():
