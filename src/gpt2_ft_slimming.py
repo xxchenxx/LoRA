@@ -174,12 +174,6 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     _lm_loss = _lm_loss.mean() 
     idx_layer = 0
     from model_prune_head import Attention
-    #self_slimming_coef_records = [[] for _ in range(24)]
-    #for m in model.modules():
-    #    if isinstance(m, Attention) and m.self_slimming:
-    #        self_slimming_coef_records[idx_layer].append(m.slimming_coef.detach().cpu().numpy().reshape(-1))
-    #        idx_layer += 1
-    #print(self_slimming_coef_records)
     l1_loss_self_coef = 1e-5
     if l1_loss_self_coef > 0.0:
         l1_self_loss = 0.0
@@ -213,37 +207,6 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         torch.save({'model_state_dict': model.state_dict()}, model_path)
       distributed_sync(args)
 
-    # evaluation interval
-    attention_modules = []
-    # slimming_coefs = []
-    '''
-    for m in model.modules():
-        if isinstance(m, Attention):
-            attention_modules.append(m)
-                    # slimming_coefs.append(m.self.slimming_coef.detach().cpu().numpy().reshape(-1))
-            # slimming_coefs = np.array(slimming_coefs)
-        #if training_args.slimming_coef_step > 0:
-        if False:
-            slimming_coefs = np.load(training_args.self_slimming_coef_file)[:, training_args.slimming_coef_step-1, :]
-        else:
-            # random pruning
-            # get internal state of the random generator first
-            rand_state = np.random.get_state()
-            # set random seed
-            np.random.seed(1)
-            slimming_coefs = np.random.rand(len(attention_modules), 24)
-            # reset internal state
-            np.random.set_state(rand_state)
-        #quantile_axis = -1 if training_args.self_pruning_method == 'layerwise' else None
-        quantile_axis = -1
-        #training_args.self_pruning_ratio = 0.5
-        threshold = np.quantile(slimming_coefs, 0.5, axis=quantile_axis, keepdims=True)
-        layers_masks = slimming_coefs > threshold
-        for m, mask in zip(attention_modules, layers_masks):
-            pruned_heads = [i for i in range(len(attention_modules)) if mask[i] == 0]
-            #logger.info('pruned heads:', pruned_heads)
-            m.prune_heads(pruned_heads)
-    '''
     if train_step % args.eval_interval == 0:
       eval_start_time = time.time()
 
@@ -316,7 +279,7 @@ if __name__ == '__main__':
     # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
   else:
     for n, p in lm_net.named_parameters():
-      if 'adapter' in n or 'coef' in n:
+      if 'adapter' in n:# or 'coef' in n:
         print(f'{n}, shape: {p.shape}')
       else:
         p.requires_grad = False
