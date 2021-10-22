@@ -14,7 +14,7 @@ from optimizer import create_adam_optimizer, create_optimizer_scheduler, add_opt
 
 
 from data_utils import FT_Dataset # BinCorpus, BinLMOrderedIterator
-from model import GPT2Config, GPT2LMModel
+from model_prune_head import GPT2Config, GPT2LMModel
 from exp_utils import create_exp_dir
 
 import itertools
