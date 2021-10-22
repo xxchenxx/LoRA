@@ -4,6 +4,7 @@ import math
 import os, sys
 
 import torch
+import random
 torch.set_printoptions(threshold=100000)
 
 import numpy as np
@@ -13,7 +14,7 @@ from optimizer import create_adam_optimizer, create_optimizer_scheduler, add_opt
 
 
 from data_utils import FT_Dataset # BinCorpus, BinLMOrderedIterator
-from model_prune_head import GPT2Config, GPT2LMModel
+from model import GPT2Config, GPT2LMModel
 from exp_utils import create_exp_dir
 
 import itertools
@@ -85,6 +86,15 @@ def print_args(args):
     for k, v in args.__dict__.items():
       print('    - {} : {}'.format(k, v))
     print('=' * 100)
+
+def set_seed(seed):
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    np.random.seed(seed)
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
 
 class AverageMeter(object):
   """Computes and stores the average and current value
@@ -168,20 +178,9 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     _input = data['input'].to(args.device)
     _target = data['target'].to(args.device)
     _msk = data['mask'].to(args.device)
-
     _lm_logits, _lm_loss = model(_input, lm_labels=_target, lm_mask=_msk, label_smooth=args.label_smooth) 
 
     _lm_loss = _lm_loss.mean() 
-    idx_layer = 0
-    from model_prune_head import Attention
-    l1_loss_self_coef = 0e-5
-    l1_self_loss = 0
-    if l1_loss_self_coef > 0.0:
-        l1_self_loss = 0.0
-        for m in model.modules():
-            if isinstance(m, Attention) and m.self_slimming:
-                l1_self_loss += m.slimming_coef.abs().sum()
-        _lm_loss += l1_self_loss * l1_loss_self_coef
 
     train_step += 1
     is_update = True if train_step % args.grad_acc == 0 else False
@@ -192,9 +191,9 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
       elapsed = time.time() - log_start_time
 
       log_str = '| epoch {:3d} step {:>8d} | {:>6d} batches | lr {:.3g}' \
-                '| ms/batch {:5.2f} | loss {:5.2f} | avg loss {:5.2f} | l1 loss {:5.2f} | ppl {:5.2f}'.format(
+                '| ms/batch {:5.2f} | loss {:5.2f} | avg loss {:5.2f} | ppl {:5.2f}'.format(
                 epoch, train_step, idx + 1, optimizer.param_groups[0]['lr'], 
-                elapsed * 1000 / args.log_interval, avg_lm_loss.val, avg_lm_loss.avg, l1_self_loss * l1_loss_self_coef, math.exp(avg_lm_loss.avg)) 
+                elapsed * 1000 / args.log_interval, avg_lm_loss.val, avg_lm_loss.avg, math.exp(avg_lm_loss.avg)) 
 
       if args.rank == 0: 
         print(log_str)
@@ -208,6 +207,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
         torch.save({'model_state_dict': model.state_dict()}, model_path)
       distributed_sync(args)
 
+    # evaluation interval
     if train_step % args.eval_interval == 0:
       eval_start_time = time.time()
 
@@ -238,11 +238,13 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     torch.save({'model_state_dict': model.state_dict()}, model_path) 
   distributed_sync(args)
   return train_step
+
 if __name__ == '__main__':
   args = parser.parse_args()
+  set_seed(args.random_seed)
   parse_gpu(args)
   print_args(args)
-  
+
   if args.rank == 0:
     args.logging = create_exp_dir(args.work_dir)
 
@@ -266,8 +268,6 @@ if __name__ == '__main__':
     config = GPT2Config(n_embd=1280, n_layer=36, n_head=20, lora_attn_dim=args.lora_dim, lora_attn_alpha=args.lora_alpha, lora_dropout=args.lora_dropout,
                         prefix_len=args.prefix_len, infix_len=args.infix_len)
 
-
-  config.self_slimming = True
   lm_net = GPT2LMModel(config)
   if args.init_checkpoint is not None:
     print('loading model pretrained weight.')
@@ -280,7 +280,7 @@ if __name__ == '__main__':
     # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
   else:
     for n, p in lm_net.named_parameters():
-      if 'adapter' in n:# or 'coef' in n:
+      if 'adapter' in n:
         print(f'{n}, shape: {p.shape}')
       else:
         p.requires_grad = False
