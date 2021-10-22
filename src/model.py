@@ -126,6 +126,12 @@ class Attention(nn.Module):
                 self.v_moe_adapter1 = nn.Linear(nx, num_expert, bias=False)
                 nn.init.normal_(self.v_moe_adapter1.weight, std=0.02)
 
+        self.self_slimming = True
+        if self.self_slimming:
+            self.slimming_coef = nn.Parameter(
+                torch.ones(self.n_head).reshape(1,-1,1,1) * 1.0
+            ) 
+
     def _attn(self, q, k, v, len_kv = None):
         w = torch.matmul(q, k)
         if self.scale:
@@ -144,6 +150,8 @@ class Attention(nn.Module):
             w = w.masked_fill(_input_msk.unsqueeze(1).unsqueeze(2), -1.0e10) 
 
         w = nn.Softmax(dim=-1)(w)
+        if self.self_slimming:
+            w = w * self.slimming_coef
         return torch.matmul(w, v)
 
     def merge_heads(self, x):
