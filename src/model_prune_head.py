@@ -231,7 +231,8 @@ class Attention(nn.Module):
         w = nn.Softmax(dim=-1)(w)
         #print(w.shape)
         if self.self_slimming:
-            w = w * self.slimming_coef
+            #w = w * self.slimming_coef
+            pass
         return torch.matmul(w, v)
 
     def merge_heads(self, x):
