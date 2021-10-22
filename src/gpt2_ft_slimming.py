@@ -174,7 +174,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     _lm_loss = _lm_loss.mean() 
     idx_layer = 0
     from model_prune_head import Attention
-    l1_loss_self_coef = 1e-5
+    l1_loss_self_coef = 0e-5
     if l1_loss_self_coef > 0.0:
         l1_self_loss = 0.0
         for m in model.modules():
@@ -286,7 +286,7 @@ if __name__ == '__main__':
 
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'coef' in n],
+            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
         }
     ]
     optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
