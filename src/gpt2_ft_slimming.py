@@ -174,7 +174,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     _lm_loss = _lm_loss.mean() 
     idx_layer = 0
     from model_prune_head import Attention
-    l1_loss_self_coef = 0e-5
+    l1_loss_self_coef = 1e-4
     l1_self_loss = 0
     if l1_loss_self_coef > 0.0:
         l1_self_loss = 0.0
