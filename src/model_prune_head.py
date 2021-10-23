@@ -102,7 +102,7 @@ class Attention(nn.Module):
 
         self.lora_attn_dim = config.lora_attn_dim 
         self.lora_attn_alpha = config.lora_attn_alpha
-
+        self.pruned_heads = set()
         if self.lora_attn_dim > 0:
             self.q_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
             nn.init.normal_(self.q_proj_adapter1.weight, std=0.02)
