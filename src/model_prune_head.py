@@ -166,7 +166,7 @@ class Attention(nn.Module):
         index = torch.arange(len(mask))[mask].long()
         long_index = torch.cat([index, index + self.split_size, index + self.split_size*2])
         # Prune linear layers
-        self.c_attn = prune_conv1d(self.c_attn, index)
+        self.c_attn = prune_conv1d(self.c_attn, long_index)
         self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
         #self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
         #print(index)
@@ -174,7 +174,9 @@ class Attention(nn.Module):
         self.q_proj_adapter2.weight.data = self.q_proj_adapter2.weight.data.index_select(0, index.to(self.q_proj_adapter2.weight.data.device)).clone().detach()
         # Update hyper params and store pruned heads
         self.n_head = self.n_head - len(heads)
+        
         self.all_head_size = self.attention_head_size * self.n_head
+        self.split_size = self.all_head_size
         self.pruned_heads = self.pruned_heads.union(heads)
         #print(index)
         self.slimming_coef.data = self.slimming_coef.data[:,remain,:,:]
