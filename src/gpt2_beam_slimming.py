@@ -399,7 +399,7 @@ if __name__ == '__main__':
   if args.init_checkpoint is not None:
     print('loading model pretrained weight.')
     cp = torch.load(args.init_checkpoint, map_location=torch.device('cpu'))
-    lm_net.load_weight(cp, strict=False)  
+    lm_net.load_weight(cp)  
   lm_net = lm_net.cuda()
   print('model sampling ...')
   beam(lm_net, valid_loader, args)
