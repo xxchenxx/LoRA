@@ -75,6 +75,7 @@ parser.add_argument('--prefix_len', default=0, type=int, help='prefix length.')
 
 parser.add_argument('--infix_len', default=0, type=int, help='infix length.')
 
+parser.add_argument('--coef_checkpoint', default=None, type=str, help='')
 
 def print_args(args):
   if args.rank == 0:
@@ -370,24 +371,35 @@ if __name__ == '__main__':
   
   train_step = 0
   attention_modules = []
-  slimming_coefs = np.load('self_slimming_coef_records.npy')
+  assert args.coef_checkpoint is not None
+  checkpoint = torch.load(args.coef_checkpoint, map_location="cpu")['model_state_dict']
+  slimming_coefs = []
+  count = 0
+  print(checkpoint.keys())
+  for k in checkpoint:
+      if 'slimming_coef' in k:
+          slimming_coefs.append(checkpoint[k].detach().view(-1).numpy())
+          count += 1
+
+  print(count)
+  slimming_coefs = np.stack(slimming_coefs)
+  print(slimming_coefs.shape)
   for m in lm_net.modules():
       if isinstance(m, Attention):
           attention_modules.append(m)
   quantile_axis = -1
-  threshold = np.quantile(slimming_coefs, 0.5, axis=quantile_axis, keepdims=True)
+  threshold = np.quantile(slimming_coefs, 1/16, axis=quantile_axis, keepdims=True)
   layers_masks = slimming_coefs > threshold
   layers_masks = [layers_masks[i] for i in range(layers_masks.shape[0])]
   for m, mask in zip(attention_modules, layers_masks):
       pruned_heads = [i for i in range(16) if mask[i] == 0]
       print(pruned_heads)
-      m.prune_heads(pruned_heads)
-      m.self_slimming = False
+      #prune_heads(pruned_heads)
 
   if args.init_checkpoint is not None:
     print('loading model pretrained weight.')
     cp = torch.load(args.init_checkpoint, map_location=torch.device('cpu'))
-    lm_net.load_weight(cp)  
+    lm_net.load_weight(cp, strict=False)  
   lm_net = lm_net.cuda()
   print('model sampling ...')
   beam(lm_net, valid_loader, args)
