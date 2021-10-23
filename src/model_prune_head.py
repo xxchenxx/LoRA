@@ -164,11 +164,9 @@ class Attention(nn.Module):
         remain = mask[:, 0].contiguous().eq(1)
         mask = mask.view(-1).contiguous().eq(1)
         index = torch.arange(len(mask))[mask].long()
-
+        long_index = torch.cat([index, index + self.split_size, index + self.split_size*2])
         # Prune linear layers
-        self.query = prune_conv1d(self.query, index)
-        self.key = prune_conv1d(self.key, index)
-        self.value = prune_conv1d(self.value, index)
+        self.c_attn = prune_conv1d(self.c_attn, index)
         self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
         #self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
         #print(index)
