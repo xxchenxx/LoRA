@@ -203,6 +203,7 @@ class Attention(nn.Module):
         hidden_states = x
 
         x = self.c_attn(x)
+        print(x.shape)
         query, key, value = x.split(self.split_size, dim=2)
         hidden_states_flat = hidden_states.view(-1, self.split_size)
         query_flat = query.view(-1, self.split_size)
