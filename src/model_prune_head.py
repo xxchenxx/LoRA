@@ -166,6 +166,15 @@ class Attention(nn.Module):
             self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.v_proj_adapter2.weight.data.zero_()
 
+            self.S_Q_embedding = nn.Linear(1024, 1024, bias=False)
+            self.S_V_embedding = nn.Linear(1024, 1024, bias=False)
+            mask = torch.zeros(1024,1024)
+            self.register_parameter("S_Q", nn.Parameter(mask))
+            mask = torch.zeros(1024,1024)
+            self.register_parameter("S_V", nn.Parameter(mask))
+            self.S_Q.requires_grad = False
+            self.S_V.requires_grad = False
+            
             self.q_moe_adapter1 = None
             self.v_moe_adapter1 = None
 

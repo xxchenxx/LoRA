@@ -353,12 +353,7 @@ if __name__ == '__main__':
         V_Q = torch.cat([V_Q, E_Q_vector])
         V_V = torch.cat([V_V, E_V_vector])
 
-      #module.q_proj_adapter2.weight.data = U_Q
-      #module.q_proj_adapter1.weight.data = V_Q
       module.S_Q.data = S_Q.to(module.S_Q.data.device)
-
-      #module.v_proj_adapter2.weight.data = U_V
-      #module.v_proj_adapter1.weight.data = V_V
       module.S_V.data = S_V.to(module.S_Q.data.device)
 
       q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - args.num_sparse)
