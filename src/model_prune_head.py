@@ -134,7 +134,7 @@ class Attention(nn.Module):
 
                 self.v_moe_adapter1 = nn.Linear(nx, num_expert, bias=False)
                 nn.init.normal_(self.v_moe_adapter1.weight, std=0.02)
-                
+
         self.self_slimming = True
         if self.self_slimming:
             self.slimming_coef = nn.Parameter(
@@ -182,6 +182,26 @@ class Attention(nn.Module):
         #print(index)
         self.v_proj_adapter2.weight.data = self.v_proj_adapter2.weight.data.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
         self.q_proj_adapter2.weight.data = self.q_proj_adapter2.weight.data.index_select(0, index.to(self.q_proj_adapter2.weight.data.device)).clone().detach()
+
+        self.S_Q = self.S_Q.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
+        self.S_V = self.S_V.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
+
+        self.S_Q_embedding.weight.data = self.S_Q_embedding.weight.data.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
+        self.S_V_embedding.weight.data = self.S_V_embedding.weight.data.index_select(0, index.to(self.v_proj_adapter2.weight.data.device)).clone().detach()
+
+        size = self.S_Q_embedding.weight.data.size()
+        new_S_Q_embedding = nn.Linear(size[0], size[1]).to(self.v_proj_adapter2.weight.data.device)
+        new_S_V_embedding = nn.Linear(size[0], size[1]).to(self.v_proj_adapter2.weight.data.device)
+        new_S_Q_embedding.weight.requires_grad = False
+        new_S_Q_embedding.weight.copy_(self.S_Q_embedding.weight.data)
+        new_S_Q_embedding.weight.requires_grad = True
+
+        new_S_V_embedding.weight.requires_grad = False
+        new_S_V_embedding.weight.copy_(self.S_V_embedding.weight.data)
+        new_S_V_embedding.weight.requires_grad = True
+
+        self.S_Q_embedding = new_S_Q_embedding
+        self.S_V_embedding = new_S_V_embedding
         # Update hyper params and store pruned heads
         self.n_head = self.n_head - len(heads)
         
