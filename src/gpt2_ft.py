@@ -325,6 +325,8 @@ if __name__ == '__main__':
       V_V = torch.randn((1, module.v_proj_adapter1.weight.data.shape[1])).to(Q_weight.device).detach()
       S_V = module.S_V.data.detach()
       for rank in range(31):
+        S_Q = torch.zeros_like(Q_weight)
+        S_V = torch.zeros_like(V_weight)
         for _ in range(args.compress_step):
           U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
           V_Q = U_Q.T @ (Q_weight - S_Q)
