@@ -13,7 +13,7 @@ from optimizer import create_adam_optimizer, create_optimizer_scheduler, add_opt
 
 
 from data_utils import FT_Dataset # BinCorpus, BinLMOrderedIterator
-from model_prune_head import GPT2Config, GPT2LMModel
+from model_prune_head import GPT2Config, GPT2LMModel, Attention
 from exp_utils import create_exp_dir
 
 import itertools
@@ -173,7 +173,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
 
     _lm_loss = _lm_loss.mean() 
     idx_layer = 0
-    from model_prune_head import Attention
+    
     #self_slimming_coef_records = [[] for _ in range(24)]
     #for m in model.modules():
     #    if isinstance(m, Attention) and m.self_slimming:
@@ -216,34 +216,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     # evaluation interval
     attention_modules = []
     # slimming_coefs = []
-    '''
-    for m in model.modules():
-        if isinstance(m, Attention):
-            attention_modules.append(m)
-                    # slimming_coefs.append(m.self.slimming_coef.detach().cpu().numpy().reshape(-1))
-            # slimming_coefs = np.array(slimming_coefs)
-        #if training_args.slimming_coef_step > 0:
-        if False:
-            slimming_coefs = np.load(training_args.self_slimming_coef_file)[:, training_args.slimming_coef_step-1, :]
-        else:
-            # random pruning
-            # get internal state of the random generator first
-            rand_state = np.random.get_state()
-            # set random seed
-            np.random.seed(1)
-            slimming_coefs = np.random.rand(len(attention_modules), 24)
-            # reset internal state
-            np.random.set_state(rand_state)
-        #quantile_axis = -1 if training_args.self_pruning_method == 'layerwise' else None
-        quantile_axis = -1
-        #training_args.self_pruning_ratio = 0.5
-        threshold = np.quantile(slimming_coefs, 0.5, axis=quantile_axis, keepdims=True)
-        layers_masks = slimming_coefs > threshold
-        for m, mask in zip(attention_modules, layers_masks):
-            pruned_heads = [i for i in range(len(attention_modules)) if mask[i] == 0]
-            #logger.info('pruned heads:', pruned_heads)
-            m.prune_heads(pruned_heads)
-    '''
+
     if train_step % args.eval_interval == 0:
       eval_start_time = time.time()
 
@@ -337,6 +310,61 @@ if __name__ == '__main__':
   if args.fp16:
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
+  for name, module in lm_net.named_modules():
+    if isinstance(module, Attention):
+      module.S_Q.data = torch.zeros(1024, 1024).to(module.S_Q.device)
+      module.S_V.data = torch.zeros(1024, 1024).to(module.S_Q.device)
+
+  for name, module in lm_net.named_modules():
+    residual_change = []
+    if isinstance(module, Attention):
+      Q_weight = module.c_attn.weight[:, :module.split_size].detach()
+      V_weight = module.c_attn.weight[:, 2*module.split_size:].detach()
+      U_Q = torch.randn((module.q_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device).detach()
+      V_Q = torch.randn((1, module.q_proj_adapter1.weight.data.shape[1])).to(Q_weight.device).detach()
+      S_Q = module.S_Q.data.detach()
+
+      U_V = torch.randn((module.v_proj_adapter2.weight.data.shape[0], 1)).to(Q_weight.device).detach()
+      V_V = torch.randn((1, module.v_proj_adapter1.weight.data.shape[1])).to(Q_weight.device).detach()
+      S_V = module.S_V.data.detach()
+      for rank in range(31):
+        S_Q = torch.zeros_like(Q_weight)
+        S_V = torch.zeros_like(V_weight)
+        for _ in range(args.compress_step):
+          U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
+          V_Q = U_Q.T @ (Q_weight - S_Q)
+          S_Q = Q_weight - U_Q @ V_Q
+          #residual_change.append(torch.norm(Q_weight - U_Q@V_Q).item() / torch.norm(Q_weight))
+          q = args.lambda_s
+          S_Q[S_Q.abs() < q] = 0
+
+          U_V = torch.qr((V_weight - S_V) @ V_V.T)[0]
+          V_V = U_V.T @ (V_weight - S_V)
+          S_V = V_weight - U_V @ V_V
+          #residual_change.append(torch.norm(Q_weight - U_V@V_V).item())
+          q = args.lambda_s
+          S_V[S_V.abs() < q] = 0
+
+        E_Q = Q_weight - U_Q @ V_Q - S_Q
+        E_V = V_weight - U_V @ V_V - S_V
+        E_Q_vector = torch.qr(E_Q)[1][:1]
+        E_V_vector = torch.qr(E_V)[1][:1]
+        
+        V_Q = torch.cat([V_Q, E_Q_vector])
+        V_V = torch.cat([V_V, E_V_vector])
+
+      #module.q_proj_adapter2.weight.data = U_Q
+      #module.q_proj_adapter1.weight.data = V_Q
+      module.S_Q.data = S_Q.to(module.S_Q.data.device)
+
+      #module.v_proj_adapter2.weight.data = U_V
+      #module.v_proj_adapter1.weight.data = V_V
+      module.S_V.data = S_V.to(module.S_Q.data.device)
+
+      q, _ = torch.kthvalue(module.S_Q.data.abs().view(-1), module.S_Q.data.numel() - args.num_sparse)
+      v, _ = torch.kthvalue(module.S_V.data.abs().view(-1), module.S_V.data.numel() - args.num_sparse)
+      module.S_V.data = (module.S_V.data.abs() > q).float()
+      module.S_Q.data = (module.S_Q.data.abs() > v).float()
 
   try:
     train_step = 0
