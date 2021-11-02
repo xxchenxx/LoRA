@@ -81,6 +81,7 @@ parser.add_argument('--eval_epoch', type=int, default=1, help='eval per number o
 parser.add_argument('--compress_step', type=int, default=20, help='eval per number of epochs.')
 parser.add_argument('--lambda_s', type=float, default=0.01, help='lambda_s')
 parser.add_argument('--num_sparse', type=int, default=64, help='compress_step')
+
 # influence model, calculate the influence score between two samples.
 def print_args(args):
   if args.rank == 0:
@@ -292,14 +293,14 @@ if __name__ == '__main__':
     # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
   else:
     for n, p in lm_net.named_parameters():
-      if 'adapter' in n or 'coef' in n:
+      if 'adapter' in n or 'coef' in n or 'embedding' in n:
         print(f'{n}, shape: {p.shape}')
       else:
         p.requires_grad = False
 
     optimizer_grouped_parameters = [
         {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'coef' in n],
+            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n or 'coef' in n or 'embedding' in n],
         }
     ]
     optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
