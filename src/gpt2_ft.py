@@ -331,7 +331,7 @@ if __name__ == '__main__':
           U_Q = torch.qr((Q_weight - S_Q) @ V_Q.T)[0]
           V_Q = U_Q.T @ (Q_weight - S_Q)
           S_Q = Q_weight - U_Q @ V_Q
-          residual_change.append(torch.norm(Q_weight - U_Q@V_Q).item() / torch.norm(Q_weight))
+          #residual_change.append(torch.norm(Q_weight - U_Q@V_Q).item() / torch.norm(Q_weight))
           q = args.lambda_s
           S_Q[S_Q.abs() < q] = 0
 
