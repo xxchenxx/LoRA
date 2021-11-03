@@ -75,8 +75,9 @@ def print_constraints(model, constraints):
 def make_feasible(model, constraints):
     """Shift all model parameters inside the feasible region defined by constraints"""
     for idx, (name, param) in enumerate(model.named_parameters()):
-        constraint = constraints[idx]
-        param.copy_(constraint.shift_inside(param))
+        if 'adapter' in name:
+            constraint = constraints[idx]
+            param.copy_(constraint.shift_inside(param))
 
 
 @torch.no_grad()
