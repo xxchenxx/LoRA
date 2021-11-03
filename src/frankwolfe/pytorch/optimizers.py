@@ -16,9 +16,9 @@ class SFW(torch.optim.Optimizer):
         momentum (float): momentum factor, 0 for no momentum
     """
 
-    def __init__(self, params, learning_rate=0.1, rescale='diameter', momentum=0.9):
-        # if not (0.0 <= learning_rate <= 1.0):
-        #    raise ValueError("Invalid learning rate: {}".format(learning_rate))
+    def __init__(self, params, lr=0.1, rescale='diameter', momentum=0.9):
+        # if not (0.0 <= lr <= 1.0):
+        #    raise ValueError("Invalid learning rate: {}".format(lr))
         if not (0.0 <= momentum <= 1.0):
             raise ValueError("Momentum must be between [0, 1].")
         if not (rescale in ['diameter', 'gradient', None]):
@@ -27,7 +27,7 @@ class SFW(torch.optim.Optimizer):
         # Parameters
         self.rescale = rescale
 
-        defaults = dict(lr=learning_rate, momentum=momentum)
+        defaults = dict(lr=lr, momentum=momentum)
         super(SFW, self).__init__(params, defaults)
 
     @torch.no_grad()
@@ -93,9 +93,9 @@ class AdaGradSFW(torch.optim.Optimizer):
         momentum (float, optional): momentum factor
     """
 
-    def __init__(self, params, inner_steps=2, learning_rate=1e-2, delta=1e-8, momentum=0.9):
-        if not 0.0 <= learning_rate:
-            raise ValueError("Invalid learning rate: {}".format(learning_rate))
+    def __init__(self, params, inner_steps=2, lr=1e-2, delta=1e-8, momentum=0.9):
+        if not 0.0 <= lr:
+            raise ValueError("Invalid learning rate: {}".format(lr))
         if not 0.0 <= momentum <= 1.0:
             raise ValueError("Momentum must be between [0, 1].")
         if not 0.0 <= delta:
@@ -105,7 +105,7 @@ class AdaGradSFW(torch.optim.Optimizer):
 
         self.K = inner_steps
 
-        defaults = dict(lr=learning_rate, delta=delta, momentum=momentum)
+        defaults = dict(lr=lr, delta=delta, momentum=momentum)
         super(AdaGradSFW, self).__init__(params, defaults)
 
         for group in self.param_groups:
