@@ -22,6 +22,7 @@ import itertools
 from torch.utils.data import DataLoader
 
 from frankwolfe.pytorch.optimizers import SFW, AdaGradSFW
+import frankwolfe.pytorch.constraints as constraints
 
 
 parser = argparse.ArgumentParser(description='PyTorch GPT2 evaluation script.')
@@ -296,6 +297,8 @@ if __name__ == '__main__':
 
     print(trainable)
     optimizer = create_sfw_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
+    constraint = constraints.create_k_sparse_constraints(lm_net, K=1000, K_frac=0.05, value=15, mode='initialization')
+    constraints.make_feasible(lm_net, constraint)
     #None, args.lr, args.weight_decay, optimizer_grouped_parameters=optimizer_grouped_parameters, correct_bias=True, adam_epislon=1.0e-6)
 
   if args.max_step is None:
