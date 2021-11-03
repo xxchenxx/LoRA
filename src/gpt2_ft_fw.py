@@ -132,7 +132,7 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True)
       else:
         torch.nn.utils.clip_grad_norm_(_model.parameters(), args.clip)
 
-    _optimizer.step()    
+    _optimizer.step(constraint)    
     _optimizer.zero_grad()
 
   if _schedule is not None:
