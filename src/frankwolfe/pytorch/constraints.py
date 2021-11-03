@@ -144,7 +144,7 @@ def create_k_sparse_constraints(model, K=1, K_frac=None, value=300, mode='initia
                         # Catch unlikely case that weight/bias is 0-initialized (e.g. BatchNorm does this)
                         avg_norm = 1.0
                     print(avg_norm)
-                    init_norms[name] = avg_norm
+                    init_norms[name + '.' + param_type] = avg_norm
 
     for name, param in model.named_parameters():
         if 'adapter' in name:
