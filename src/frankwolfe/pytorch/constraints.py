@@ -132,6 +132,7 @@ def create_k_sparse_constraints(model, K=1, K_frac=None, value=300, mode='initia
     init_norms = dict()
     if mode == 'initialization':
         for name, layer in model.named_modules():
+            if 'adapter' in name:
                 for param_type in [entry for entry in ['weight', 'bias'] if (hasattr(layer, entry) and
                                                                              type(getattr(layer, entry)) != type(
                             None))]:
@@ -146,27 +147,28 @@ def create_k_sparse_constraints(model, K=1, K_frac=None, value=300, mode='initia
                     init_norms[name] = avg_norm
 
     for name, param in model.named_parameters():
-        n = param.numel()
+        if 'adapter' in name:
+            n = param.numel()
 
-        if K_frac is None and K is None:
-            raise ValueError("Both K and K_frac are None")
-        elif K_frac is None:
-            real_K = min(int(K), n)
-        elif K is None:
-            real_K = min(int(K_frac * n), n)
-        else:
-            real_K = min(max(int(K), int(K_frac * n)), n)
+            if K_frac is None and K is None:
+                raise ValueError("Both K and K_frac are None")
+            elif K_frac is None:
+                real_K = min(int(K), n)
+            elif K is None:
+                real_K = min(int(K_frac * n), n)
+            else:
+                real_K = min(max(int(K), int(K_frac * n)), n)
 
-        if mode == 'radius':
-            constraint = KSparsePolytope(n, K=real_K, diameter=None, radius=value)
-        elif mode == 'diameter':
-            constraint = KSparsePolytope(n, K=real_K, diameter=value, radius=None)
-        elif mode == 'initialization':
-            diameter = 2.0 * value * init_norms[name]
-            constraint = KSparsePolytope(n, K=real_K, diameter=diameter, radius=None)
-        else:
-            raise ValueError(f"Unknown mode {mode}")
-        constraints.append(constraint)
+            if mode == 'radius':
+                constraint = KSparsePolytope(n, K=real_K, diameter=None, radius=value)
+            elif mode == 'diameter':
+                constraint = KSparsePolytope(n, K=real_K, diameter=value, radius=None)
+            elif mode == 'initialization':
+                diameter = 2.0 * value * init_norms[name]
+                constraint = KSparsePolytope(n, K=real_K, diameter=diameter, radius=None)
+            else:
+                raise ValueError(f"Unknown mode {mode}")
+            constraints.append(constraint)
     return constraints
 
 
