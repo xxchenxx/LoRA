@@ -15,6 +15,7 @@ import argparse
 
 from torch.optim.lr_scheduler import _LRScheduler
 
+from frankwolfe.pytorch.optimizers import SFW, AdaGradSFW
 
 def add_optimizer_params(parser: argparse.ArgumentParser):
     parser.add_argument('--lr', default=0.00001, type=float, help='learning rate.')
@@ -290,6 +291,21 @@ def create_adam_optimizer_from_args(model, args, grouped_parameters=None):
 
     optimizer = AdamW(grouped_parameters, lr=args.lr, betas=(args.adam_beta1, args.adam_beta2), eps=args.adam_epislon, 
                       weight_decay=args.weight_decay, correct_bias=args.correct_bias)
+    return optimizer
+
+
+def create_sfw_optimizer_from_args(model, args, grouped_parameters=None):
+    if grouped_parameters is None:
+        grouped_parameters = create_grouped_parameters(model, args.no_decay_bias)
+
+    optimizer = SFW(grouped_parameters, lr=args.lr)
+    return optimizer
+
+def create_adagradsfw_optimizer_from_args(model, args, grouped_parameters=None):
+    if grouped_parameters is None:
+        grouped_parameters = create_grouped_parameters(model, args.no_decay_bias)
+
+    optimizer = AdaGradSFW(grouped_parameters, lr=args.lr)
     return optimizer
 
 
