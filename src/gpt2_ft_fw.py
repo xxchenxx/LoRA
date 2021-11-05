@@ -82,6 +82,10 @@ parser.add_argument('--roll_step', type=int, default=100, help='rolling step.')
 
 parser.add_argument('--eval_epoch', type=int, default=1, help='eval per number of epochs.')
 
+parser.add_argument('--K', type=int, default=1000, help='eval per number of epochs.')
+parser.add_argument('--K_frac', type=float, default=0.05, help='eval per number of epochs.')
+parser.add_argument('--value', type=float, default=15, help='eval per number of epochs.')
+
 # influence model, calculate the influence score between two samples.
 def print_args(args):
   if args.rank == 0:
@@ -297,7 +301,7 @@ if __name__ == '__main__':
 
     print(trainable)
     optimizer = create_sfw_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
-    constraint = constraints.create_k_sparse_constraints(lm_net, K=10, K_frac=0.05, value=15, mode='initialization')
+    constraint = constraints.create_k_sparse_constraints(lm_net, K=args.K, K_frac=args.K_frac, value=args.value, mode='initialization')
     constraints.make_feasible(lm_net, constraint)
     #None, args.lr, args.weight_decay, optimizer_grouped_parameters=optimizer_grouped_parameters, correct_bias=True, adam_epislon=1.0e-6)
 
