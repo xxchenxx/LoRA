@@ -555,7 +555,7 @@ class SeqAttention(nn.Module): #RelMultiHeadAttn):
 
 def prune_conv1d(layer, index, dim=1):
     print(layer.weight.shape)
-    print(index)
+    #print(index)
     index = index.to(layer.weight.device)
     #print(index)
     
