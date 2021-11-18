@@ -621,7 +621,7 @@ class MLP(nn.Module):
         # Prune slimming coefficients
         if self.inter_slimming:
             slimming_index = slimming_index.to(self.slimming_coef.device)
-            new_data = self.slimming_coef.data.index_select(1, slimming_index).clone().detach()
+            new_data = self.slimming_coef.data.index_select(2, slimming_index).clone().detach()
             with torch.no_grad():
                 self.slimming_coef = nn.Parameter(new_data)
 
