@@ -560,6 +560,7 @@ def prune_conv1d(layer, index, dim=1):
     #print(index)
     
     W = layer.weight.index_select(dim, index).clone().detach()
+    print(W.shape)
     if layer.bias is not None:
         if dim == 0:
             b = layer.bias.clone().detach()
@@ -613,7 +614,7 @@ class MLP(nn.Module):
 
         # Prune linear layers
         print(self.c_fc.weight.shape)
-        self.c_fc = prune_conv1d(self.c_fc, index)
+        self.c_fc = prune_conv1d(self.c_fc, index, dim=1)
         self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
 
         # Update hyper params and store pruned neurons
