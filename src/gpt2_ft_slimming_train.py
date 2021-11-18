@@ -293,7 +293,7 @@ if __name__ == '__main__':
     print('loading model pretrained weight.')
     lm_net.load_weight(torch.load(args.init_checkpoint))  
 
-  #lm_net = lm_net.cuda()
+  lm_net = lm_net.cuda()
 
   optimizer = create_adam_optimizer_from_args(lm_net, args)
     # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
