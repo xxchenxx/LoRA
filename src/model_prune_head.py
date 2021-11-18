@@ -558,7 +558,7 @@ def prune_conv1d(layer, index, dim=1):
     #print(index)
     index = index.to(layer.weight.device)
     #print(index)
-    
+    print(W.shape)
     W = layer.weight.index_select(dim, index).clone().detach()
     print(W.shape)
     if layer.bias is not None:
