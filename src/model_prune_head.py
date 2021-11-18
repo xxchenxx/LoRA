@@ -556,11 +556,11 @@ class SeqAttention(nn.Module): #RelMultiHeadAttn):
 def prune_conv1d(layer, index, dim=1):
     #print(layer.weight.shape)
     #print(index)
+    layer = layer.to('cpu')
     index = index.to(layer.weight.device)
-    print(index)
-    print(layer.weight.shape)
+
     W = layer.weight.index_select(dim, index).clone().detach()
-    print(W.shape)
+
     if layer.bias is not None:
         if dim == 0:
             b = layer.bias.clone().detach()
@@ -613,7 +613,7 @@ class MLP(nn.Module):
             slimming_index = torch.arange(len(slimming_mask))[slimming_mask].long()
 
         # Prune linear layers
-        #self.c_fc = prune_conv1d(self.c_fc, index, dim=1)
+        self.c_fc = prune_conv1d(self.c_fc, index, dim=1)
         self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
 
         # Update hyper params and store pruned neurons
