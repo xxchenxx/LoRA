@@ -110,70 +110,12 @@ class Attention(nn.Module):
         self.n_head = config.n_head
         self.split_size = n_state
         self.scale = scale
-        self.query = Conv1D(n_state, nx)
-        self.value = Conv1D(n_state, nx)
-        self.key = Conv1D(n_state, nx)
-        #self.c_attn = Conv1D(n_state * 3, nx)
+        self.c_attn = Conv1D(n_state * 3, nx)
         self.c_proj = Conv1D(n_state, nx)
 
-        #self.lora_dropout = config.lora_dropout
-
-        self.config = config
-        self.lora_dropout = None
-        if config.lora_dropout > 0:
-            self.lora_dropout = nn.Dropout(config.lora_dropout)
-
-        self.lora_r_dropout = None
-        if config.lora_r_dropout > 0:
-            self.lora_r_dropout = nn.Dropout(config.lora_r_dropout)
-
-
-        self.lora_attn_dim = config.lora_attn_dim 
-        self.lora_attn_alpha = config.lora_attn_alpha
-        
+        self.config = config        
         self.pruned_heads = set()
         
-    
-
-    def prune_heads(self, heads):
-        if len(heads) == 0:
-            return
-        self.attention_head_size = self.split_size // self.n_head
-        mask = torch.ones(self.n_head, self.split_size // self.n_head)
-        heads = set(heads) - self.pruned_heads  # Convert to set and remove already pruned heads
-        if self.self_slimming:
-            slimming_mask = torch.ones(self.n_head)
-        for head in heads:
-            # Compute how many pruned heads are before the head and move the index accordingly
-            head = head - sum(1 if h < head else 0 for h in self.pruned_heads)
-            mask[head] = 0
-            if self.self_slimming:
-                slimming_mask[head] = 0
-        mask = mask.view(-1).contiguous().eq(1)
-        index = torch.arange(len(mask))[mask].long()
-        if self.self_slimming:
-            slimming_mask = slimming_mask.view(-1).contiguous().eq(1)
-            slimming_index = torch.arange(len(slimming_mask))[slimming_mask].long()
-
-        # Prune linear layers
-        self.query = prune_linear_layer(self.query, index)
-        self.key = prune_linear_layer(self.key, index)
-        self.value = prune_linear_layer(self.value, index)
-        self.c_proj = prune_linear_layer(self.c_proj, index, dim=1)
-        #self.output.dense = prune_linear_layer(self.output.dense, index, dim=1)
-        
-        # Update hyper params and store pruned heads
-        self.n_head = self.n_head - len(heads)
-        self.all_head_size = self.attention_head_size * self.n_head
-        self.pruned_heads = self.pruned_heads.union(heads)
-
-        if self.self_slimming:
-            
-            slimming_index = slimming_index.to(self.slimming_coef.device)
-            new_data = self.slimming_coef.data.index_select(1, slimming_index).clone().detach()
-            with torch.no_grad():
-                self.slimming_coef = nn.Parameter(new_data)
-            # self.slimming_coef = self.slimming_coef[:,index,:,:]
 
     def _attn(self, q, k, v, len_kv = None):
         w = torch.matmul(q, k)
@@ -191,8 +133,6 @@ class Attention(nn.Module):
             _len = torch.arange(k.size(-1), device=k.device)
             _input_msk =  _len[None, :] >= (len_kv)[:, None]
             w = w.masked_fill(_input_msk.unsqueeze(1).unsqueeze(2), -1.0e10) 
-        if self.self_slimming:
-            w *= self.slimming_coef
         w = nn.Softmax(dim=-1)(w)
         return torch.matmul(w, v)
 
@@ -238,26 +178,8 @@ class Attention(nn.Module):
     # two level attention here.
     def forward(self, x, history=None, layer_past=None, len_past=None):
         hidden_states = x
-
-        #x = self.c_attn(x)
-        query = self.query(x)
-        key = self.key(x)
-        value = self.value(x)
-        #query, key, value = x.split(self.split_size, dim=2)
-        if self.lora_attn_dim > 0:
-            #value += self.adapter_forward(hidden_states, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight)
-            
-            lora_input = hidden_states
-            if self.lora_dropout is not None:
-                lora_input = self.lora_dropout(lora_input)
-
-            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1)
-
-            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1)
-
-            query = query.contiguous() + query_delta
-            value = value.contiguous() + value_delta
-
+        x = self.c_attn(x)
+        query, key, value = x.split(self.split_size, dim=2)
         query = self.split_heads(query)
         key = self.split_heads(key, k=True)
         value = self.split_heads(value)
