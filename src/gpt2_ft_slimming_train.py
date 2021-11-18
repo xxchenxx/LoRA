@@ -334,7 +334,7 @@ if __name__ == '__main__':
     for m, mask in zip(block_modules, layers_masks):
         pruned_heads = [i for i in range(16) if mask[i] == 0]
         #print()
-        m.prune_heads(pruned_heads)
+        m.prune_inter_neurons(pruned_heads)
         #m.inter_slimming = False
     for epoch in itertools.count(start=1):
       #def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
