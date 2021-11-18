@@ -13,7 +13,7 @@ from optimizer import create_adam_optimizer, create_optimizer_scheduler, add_opt
 
 
 from data_utils import FT_Dataset # BinCorpus, BinLMOrderedIterator
-from model_prune_head import GPT2Config, GPT2LMModel, Block
+from model_prune_head import GPT2Config, GPT2LMModel, MLP
 from exp_utils import create_exp_dir
 
 import itertools
@@ -325,7 +325,7 @@ if __name__ == '__main__':
     slimming_coefs = np.stack(slimming_coefs)
     print(slimming_coefs.shape)
     for m in lm_net.modules():
-        if isinstance(m, Block):
+        if isinstance(m, MLP):
             block_modules.append(m)
     quantile_axis = -1
     threshold = np.quantile(slimming_coefs, 0.5, axis=quantile_axis, keepdims=True)
