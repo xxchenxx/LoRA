@@ -332,7 +332,7 @@ if __name__ == '__main__':
     layers_masks = slimming_coefs > threshold
     layers_masks = [layers_masks[i] for i in range(layers_masks.shape[0])]
     for m, mask in zip(block_modules, layers_masks):
-        pruned_heads = [i for i in range(16) if mask[i] == 0]
+        pruned_heads = [i for i in range(len(mask)) if mask[i] == 0]
         #print()
         m.prune_inter_neurons(pruned_heads)
         #m.inter_slimming = False
