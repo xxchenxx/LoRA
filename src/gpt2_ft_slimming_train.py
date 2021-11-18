@@ -323,7 +323,7 @@ if __name__ == '__main__':
         pruned_heads = [i for i in range(16) if mask[i] == 0]
         #print()
         m.prune_heads(pruned_heads)
-        m.self_slimming = False
+        #m.inter_slimming = False
     for epoch in itertools.count(start=1):
       #def train_validate(model, optimizer, scheduler, train_data_iter, train_corpus, valid_data_iter, valid_corpus, args, train_step = 0, epoch = 0):
       train_step = train_validate(lm_net, optimizer, scheduler, train_loader, valid_loader, args, train_step=train_step, epoch = epoch)
