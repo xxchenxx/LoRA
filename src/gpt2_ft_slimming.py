@@ -173,18 +173,13 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
 
     _lm_loss = _lm_loss.mean() 
     idx_layer = 0
-    from model_prune_head import Attention
-    #self_slimming_coef_records = [[] for _ in range(24)]
-    #for m in model.modules():
-    #    if isinstance(m, Attention) and m.self_slimming:
-    #        self_slimming_coef_records[idx_layer].append(m.slimming_coef.detach().cpu().numpy().reshape(-1))
-    #        idx_layer += 1
-    #print(self_slimming_coef_records)
+    from model_prune_head import MLP
+
     l1_loss_self_coef = 0.01
     if l1_loss_self_coef > 0.0:
         l1_self_loss = 0.0
         for m in model.modules():
-            if isinstance(m, Attention) and m.self_slimming:
+            if isinstance(m, MLP) and m.inter_slimming:
                 l1_self_loss += m.slimming_coef.abs().sum()
         _lm_loss += l1_self_loss * l1_loss_self_coef
 
@@ -309,23 +304,9 @@ if __name__ == '__main__':
 
   lm_net = lm_net.cuda()
 
-  if args.lora_dim == 0:
-    optimizer = create_adam_optimizer_from_args(lm_net, args)
-    # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
-  else:
-    for n, p in lm_net.named_parameters():
-      if 'adapter' in n:
-        print(f'{n}, shape: {p.shape}')
-      else:
-        p.requires_grad = False
-
-    optimizer_grouped_parameters = [
-        {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
-        }
-    ]
-    optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
-    #None, args.lr, args.weight_decay, optimizer_grouped_parameters=optimizer_grouped_parameters, correct_bias=True, adam_epislon=1.0e-6)
+ 
+  optimizer = create_adam_optimizer_from_args(lm_net, args)
+  
 
   if args.max_step is None:
     args.max_step = (args.max_epoch * train_data.num_batches + args.world_size - 1) // args.world_size

@@ -130,34 +130,9 @@ class Attention(nn.Module):
 
         self.lora_attn_dim = config.lora_attn_dim 
         self.lora_attn_alpha = config.lora_attn_alpha
-        self.self_slimming = True
+        
         self.pruned_heads = set()
-        if self.lora_attn_dim > 0:
-            self.q_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
-            nn.init.normal_(self.q_proj_adapter1.weight, std=0.02)
-            self.q_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx // 2, bias=False)
-            self.q_proj_adapter2.weight.data.zero_()
-
-            self.v_proj_adapter1 = nn.Linear(nx, self.lora_attn_dim, bias=False)
-            nn.init.normal_(self.v_proj_adapter1.weight, std=0.02)
-            self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx // 2, bias=False)
-            self.v_proj_adapter2.weight.data.zero_()
-
-            self.q_moe_adapter1 = None
-            self.v_moe_adapter1 = None
-
-            if self.config.lora_moe == 1:
-                num_expert = self.lora_attn_dim // self.config.lora_moe_group
-
-                self.q_moe_adapter1 = nn.Linear(nx, num_expert, bias=False)
-                nn.init.normal_(self.q_moe_adapter1.weight, std=0.02)
-
-                self.v_moe_adapter1 = nn.Linear(nx, num_expert, bias=False)
-                nn.init.normal_(self.v_moe_adapter1.weight, std=0.02)
-        if self.self_slimming:
-            self.slimming_coef = nn.Parameter(
-                torch.ones(self.n_head).reshape(1,-1,1,1) * 1.0
-            ) 
+        
     
 
     def prune_heads(self, heads):
@@ -655,6 +630,31 @@ class SeqAttention(nn.Module): #RelMultiHeadAttn):
 
         return output
 
+
+def prune_conv1d(layer, index, dim=1):
+    index = index.to(layer.weight.device)
+    #print(index)
+    
+    W = layer.weight.index_select(dim, index).clone().detach()
+    if layer.bias is not None:
+        if dim == 0:
+            b = layer.bias.clone().detach()
+        else:
+            b = layer.bias[index].clone().detach()
+    new_size = list(layer.weight.size())
+    new_size[dim] = len(index)
+    new_layer = Conv1D(new_size[1], new_size[0]).to(layer.weight.device)
+    new_layer.weight.requires_grad = False
+    new_layer.weight.copy_(W.contiguous())
+    new_layer.weight.requires_grad = True
+    print(new_layer.weight.shape)
+    if layer.bias is not None:
+        new_layer.bias.requires_grad = False
+        new_layer.bias.copy_(b.contiguous())
+        new_layer.bias.requires_grad = True
+    return new_layer
+
+
 class MLP(nn.Module):
     def __init__(self, n_state, config):  # in MLP: n_state=3072 (4 * n_embd)
         super(MLP, self).__init__()
@@ -662,9 +662,48 @@ class MLP(nn.Module):
         self.c_fc = Conv1D(n_state, nx)
         self.c_proj = Conv1D(nx, n_state)
         self.act = gelu
+        self.inter_slimming = True
+        if self.inter_slimming:
+            self.slimming_coef = nn.Parameter(
+                torch.ones(nx).reshape(-1, 1) * 1.0
+            ) 
+    def prune_inter_neurons(self, neurons):
+        if len(neurons) == 0:
+            return
+        mask = torch.ones(self.c_fc.nf)
+        neurons = set(neurons) - self.pruned_inter_neurons  # Convert to set and remove already pruned neurons
+        if self.inter_slimming:
+            slimming_mask = torch.ones(self.c_fc.nf)
+        for neuron in neurons:
+            # Compute how many pruned neurons are before the neuron and move the index accordingly
+            neuron = neuron - sum(1 if n < neuron else 0 for n in self.pruned_inter_neurons)
+            mask[neuron] = 0
+            if self.inter_slimming:
+                slimming_mask[neuron] = 0
+        mask = mask.view(-1).contiguous().eq(1)
+        index = torch.arange(len(mask))[mask].long()
+        if self.inter_slimming:
+            slimming_mask = slimming_mask.view(-1).contiguous().eq(1)
+            slimming_index = torch.arange(len(slimming_mask))[slimming_mask].long()
+
+        # Prune linear layers
+        self.c_fc = prune_conv1d(self.c_fc, index)
+        self.c_proj = prune_conv1d(self.output.dense, index, dim=0)
+
+        # Update hyper params and store pruned neurons
+        self.pruned_inter_neurons = self.pruned_inter_neurons.union(neurons)
+
+        # Prune slimming coefficients
+        if self.inter_slimming:
+            slimming_index = slimming_index.to(self.slimming_coef.device)
+            new_data = self.slimming_coef.data.index_select(1, slimming_index).clone().detach()
+            with torch.no_grad():
+                self.slimming_coef = nn.Parameter(new_data)
 
     def forward(self, x):
         h = self.act(self.c_fc(x))
+        if self.inter_slimming:
+            h = h * self.slimming_coef
         h2 = self.c_proj(h)
         return h2
 
