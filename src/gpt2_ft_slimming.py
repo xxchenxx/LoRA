@@ -190,8 +190,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     
     if train_step % args.log_interval == 0: 
       elapsed = time.time() - log_start_time
-      print(args.log_interval)
-      print(avg_lm_loss.avg)
+      
       log_str = '| epoch {:3d} step {:>8d} | {:>6d} batches | lr {:.3g}' \
                 '| ms/batch {:5.2f} | loss {:5.2f} | avg loss {:5.2f} | ppl {:5.2f}'.format(
                 epoch, train_step, idx + 1, optimizer.param_groups[0]['lr'], 
