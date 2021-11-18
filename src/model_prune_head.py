@@ -626,7 +626,7 @@ class MLP(nn.Module):
                 self.slimming_coef = nn.Parameter(new_data)
 
     def forward(self, x):
-        print(x.shape)
+        #print(x.shape)
         h = self.act(self.c_fc(x))
         if self.inter_slimming:
             h = h * self.slimming_coef
