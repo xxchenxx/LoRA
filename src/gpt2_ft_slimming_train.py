@@ -13,7 +13,7 @@ from optimizer import create_adam_optimizer, create_optimizer_scheduler, add_opt
 
 
 from data_utils import FT_Dataset # BinCorpus, BinLMOrderedIterator
-from model_prune_head import GPT2Config, GPT2LMModel, Attention
+from model_prune_head import GPT2Config, GPT2LMModel, Block
 from exp_utils import create_exp_dir
 
 import itertools
@@ -295,23 +295,9 @@ if __name__ == '__main__':
 
   lm_net = lm_net.cuda()
 
-  if args.lora_dim == 0:
-    optimizer = create_adam_optimizer_from_args(lm_net, args)
+  optimizer = create_adam_optimizer_from_args(lm_net, args)
     # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
-  else:
-    for n, p in lm_net.named_parameters():
-      if 'adapter' in n:
-        print(f'{n}, shape: {p.shape}')
-      else:
-        p.requires_grad = False
-
-    optimizer_grouped_parameters = [
-        {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
-        }
-    ]
-    optimizer = create_adam_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
-    #None, args.lr, args.weight_decay, optimizer_grouped_parameters=optimizer_grouped_parameters, correct_bias=True, adam_epislon=1.0e-6)
+  
 
   if args.max_step is None:
     args.max_step = (args.max_epoch * train_data.num_batches + args.world_size - 1) // args.world_size
@@ -324,16 +310,16 @@ if __name__ == '__main__':
 
   try:
     train_step = 0
-    attention_modules = []
+    block_modules = []
     slimming_coefs = np.load('self_slimming_coef_records.npy')
     for m in lm_net.modules():
-        if isinstance(m, Attention):
-            attention_modules.append(m)
+        if isinstance(m, Block):
+            block_modules.append(m)
     quantile_axis = -1
     threshold = np.quantile(slimming_coefs, 0.5, axis=quantile_axis, keepdims=True)
     layers_masks = slimming_coefs > threshold
     layers_masks = [layers_masks[i] for i in range(layers_masks.shape[0])]
-    for m, mask in zip(attention_modules, layers_masks):
+    for m, mask in zip(block_modules, layers_masks):
         pruned_heads = [i for i in range(16) if mask[i] == 0]
         #print()
         m.prune_heads(pruned_heads)
