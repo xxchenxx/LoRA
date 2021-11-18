@@ -585,6 +585,8 @@ class MLP(nn.Module):
         self.c_proj = Conv1D(nx, n_state)
         self.act = gelu
         self.inter_slimming = True
+        print(nx)
+        print(n_state)
         if self.inter_slimming:
             self.slimming_coef = nn.Parameter(
                 torch.ones(nx).reshape(-1, 1) * 1.0
@@ -624,6 +626,7 @@ class MLP(nn.Module):
 
     def forward(self, x):
         h = self.act(self.c_fc(x))
+        print(h.shape)
         if self.inter_slimming:
             h = h * self.slimming_coef
         h2 = self.c_proj(h)
