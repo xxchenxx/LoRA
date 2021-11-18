@@ -190,7 +190,8 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     
     if train_step % args.log_interval == 0: 
       elapsed = time.time() - log_start_time
-
+      print(args.log_interval)
+      print(avg_lm_loss.avg)
       log_str = '| epoch {:3d} step {:>8d} | {:>6d} batches | lr {:.3g}' \
                 '| ms/batch {:5.2f} | loss {:5.2f} | avg loss {:5.2f} | ppl {:5.2f}'.format(
                 epoch, train_step, idx + 1, optimizer.param_groups[0]['lr'], 
@@ -306,7 +307,7 @@ if __name__ == '__main__':
 
  
   optimizer = create_adam_optimizer_from_args(lm_net, args)
-  
+
 
   if args.max_step is None:
     args.max_step = (args.max_epoch * train_data.num_batches + args.world_size - 1) // args.world_size
