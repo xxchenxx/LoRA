@@ -554,7 +554,7 @@ class SeqAttention(nn.Module): #RelMultiHeadAttn):
 
 
 def prune_conv1d(layer, index, dim=1):
-    print(layer.weight.shape)
+    #print(layer.weight.shape)
     #print(index)
     index = index.to(layer.weight.device)
     #print(index)
@@ -571,7 +571,7 @@ def prune_conv1d(layer, index, dim=1):
     new_layer.weight.requires_grad = False
     new_layer.weight.copy_(W.contiguous())
     new_layer.weight.requires_grad = True
-    print(new_layer.weight.shape)
+    #print(new_layer.weight.shape)
     if layer.bias is not None:
         new_layer.bias.requires_grad = False
         new_layer.bias.copy_(b.contiguous())
@@ -612,6 +612,7 @@ class MLP(nn.Module):
             slimming_index = torch.arange(len(slimming_mask))[slimming_mask].long()
 
         # Prune linear layers
+        print(self.c_fc.weight.shape)
         self.c_fc = prune_conv1d(self.c_fc, index)
         self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
 
