@@ -614,7 +614,7 @@ class MLP(nn.Module):
 
         # Prune linear layers
         self.c_fc = prune_conv1d(self.c_fc, index, dim=1)
-        self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
+        #self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
 
         # Update hyper params and store pruned neurons
         self.pruned_inter_neurons = self.pruned_inter_neurons.union(neurons)
