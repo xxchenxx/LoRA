@@ -613,7 +613,6 @@ class MLP(nn.Module):
             slimming_index = torch.arange(len(slimming_mask))[slimming_mask].long()
 
         # Prune linear layers
-        print(self.c_fc.weight.shape)
         self.c_fc = prune_conv1d(self.c_fc, index, dim=1)
         self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
 
