@@ -556,7 +556,6 @@ class SeqAttention(nn.Module): #RelMultiHeadAttn):
 def prune_conv1d(layer, index, dim=1):
     #print(layer.weight.shape)
     #print(index)
-    layer = layer.to('cpu')
     index = index.to(layer.weight.device)
 
     W = layer.weight.index_select(dim, index).clone().detach()
