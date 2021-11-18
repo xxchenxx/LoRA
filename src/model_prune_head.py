@@ -585,11 +585,9 @@ class MLP(nn.Module):
         self.c_proj = Conv1D(nx, n_state)
         self.act = gelu
         self.inter_slimming = True
-        print(nx)
-        print(n_state)
         if self.inter_slimming:
             self.slimming_coef = nn.Parameter(
-                torch.ones(nx).reshape(-1, 1) * 1.0
+                torch.ones(n_state).reshape(1,1,-1) * 1.0
             ) 
     def prune_inter_neurons(self, neurons):
         if len(neurons) == 0:
