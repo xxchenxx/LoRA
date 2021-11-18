@@ -613,8 +613,8 @@ class MLP(nn.Module):
             slimming_index = torch.arange(len(slimming_mask))[slimming_mask].long()
 
         # Prune linear layers
-        self.c_fc = prune_conv1d(self.c_fc, index, dim=1)
-        #self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
+        #self.c_fc = prune_conv1d(self.c_fc, index, dim=1)
+        self.c_proj = prune_conv1d(self.c_proj, index, dim=0)
 
         # Update hyper params and store pruned neurons
         self.pruned_inter_neurons = self.pruned_inter_neurons.union(neurons)
@@ -627,6 +627,7 @@ class MLP(nn.Module):
                 self.slimming_coef = nn.Parameter(new_data)
 
     def forward(self, x):
+        print(x.shape)
         h = self.act(self.c_fc(x))
         if self.inter_slimming:
             h = h * self.slimming_coef
