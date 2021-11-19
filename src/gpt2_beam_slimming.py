@@ -394,7 +394,7 @@ if __name__ == '__main__':
   for m, mask in zip(attention_modules, layers_masks):
       pruned_heads = [i for i in range(len(mask)) if mask[i] == 0]
       print(pruned_heads)
-      m.prune_neurons(pruned_heads)
+      m.prune_inter_neurons(pruned_heads)
 
   if args.init_checkpoint is not None:
     print('loading model pretrained weight.')
