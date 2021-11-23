@@ -51,8 +51,8 @@ class LayerNorm(nn.Module):
         self.bias = nn.Parameter(torch.zeros(hidden_size))
         self.variance_epsilon = eps
     def reset_parameters(self):
-        self.weight.data.zeros_().add_(1)
-        self.bias.data.zeros_()
+        self.weight.data.zero_().add_(1)
+        self.bias.data.zero_()
     def forward(self, x):
         u = x.mean(-1, keepdim=True)
         s = (x - u).pow(2).mean(-1, keepdim=True)
