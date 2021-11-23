@@ -291,7 +291,7 @@ if __name__ == '__main__':
   constraint = constraints.create_k_sparse_constraints(lm_net, K=args.K, K_frac=args.K_frac,value=args.value, mode='initialization')
   constraints.make_feasible(lm_net, constraint)
 
-  wandb.init(project=f"sfw_lora", entity="xxchen", name=f"K{args.K}_K_frac{args.K_frac}_value{args.args.value}_{hex(int(time.time()))[2:]}")
+  wandb.init(project=f"sfw_lora", entity="xxchen", name=f"K{args.K}_K_frac{args.K_frac}_value{args.value}_{hex(int(time.time()))[2:]}")
   wandb.config.update({'K': args.K, 'K_frac': args.K_frac, 'value': args.value})
 
   if args.max_step is None:
