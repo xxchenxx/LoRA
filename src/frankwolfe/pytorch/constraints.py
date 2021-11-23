@@ -75,11 +75,13 @@ def print_constraints(model, constraints):
 def make_feasible(model, constraints):
     """Shift all model parameters inside the feasible region defined by constraints"""
     count = 0
-    for idx, (name, param) in enumerate(model.named_parameters()):
-        #if 'adapter' in name:
-            constraint = constraints[count]
-            param.copy_(constraint.shift_inside(param))
-            count += 1
+    for layer in model.modules():
+        if hasattr(layer, 'reset_parameters'):
+            for param_type in [entry for entry in ['weight', 'bias'] if (hasattr(layer, entry) and type(getattr(layer, entry)) != type(None))]:
+                param = getattr(layer, param_type)
+                constraint = constraints[count]
+                param.copy_(constraint.shift_inside(param))
+                count += 1
 
 
 @torch.no_grad()
@@ -99,9 +101,7 @@ def create_lp_constraints(model, ord=2, value=300, mode='initialization'):
     if mode == 'initialization':
         for layer in model.modules():
             if hasattr(layer, 'reset_parameters'):
-                for param_type in [entry for entry in ['weight', 'bias'] if (hasattr(layer, entry) and
-                                                                             type(getattr(layer, entry)) != type(
-                            None))]:
+                for param_type in [entry for entry in ['weight', 'bias'] if (hasattr(layer, entry) and type(getattr(layer, entry)) != type(None))]:
                     param = getattr(layer, param_type)
                     shape = param.shape
 
