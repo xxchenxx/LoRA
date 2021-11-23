@@ -204,8 +204,9 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
                 '| ms/batch {:5.2f} | loss {:5.2f} | avg loss {:5.2f} | ppl {:5.2f}'.format(
                 epoch, train_step, idx + 1, optimizer.param_groups[0]['lr'], 
                 elapsed * 1000 / args.log_interval, avg_lm_loss.val, avg_lm_loss.avg, math.exp(avg_lm_loss.avg)) 
-      wandb.log({"train/avg_train_loss": avg_lm_loss.avg}, step=train_step)
+      
       if args.rank == 0: 
+        wandb.log({"train/avg_train_loss": avg_lm_loss.avg}, step=train_step)
         print(log_str)
       log_start_time = time.time()
       avg_lm_loss.reset()
@@ -222,7 +223,8 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
       eval_start_time = time.time()
 
       valid_loss, valid_ppl = evaluate(model, valid_loader, args)
-      wandb.log({"val/avg_eval_loss": valid_loss}, step=train_step)
+      if args.rank == 0: 
+        wandb.log({"val/avg_eval_loss": valid_loss}, step=train_step)
 
       if best_val_ppl is None or valid_ppl < best_val_ppl:
         best_val_ppl = valid_ppl
@@ -291,8 +293,9 @@ if __name__ == '__main__':
   constraint = constraints.create_k_sparse_constraints(lm_net, K=args.K, K_frac=args.K_frac,value=args.value, mode='initialization')
   constraints.make_feasible(lm_net, constraint)
 
-  wandb.init(project=f"sfw_lora", entity="xxchen", name=f"K{args.K}_K_frac{args.K_frac}_value{args.value}_{hex(int(time.time()))[2:]}", group="DDP")
-  wandb.config.update({'K': args.K, 'K_frac': args.K_frac, 'value': args.value})
+  if args.rank == 0: 
+    wandb.init(project=f"sfw_lora", entity="xxchen", name=f"K{args.K}_K_frac{args.K_frac}_value{args.value}_{hex(int(time.time()))[2:]}", group="DDP")
+    wandb.config.update({'K': args.K, 'K_frac': args.K_frac, 'value': args.value})
 
   if args.max_step is None:
     args.max_step = (args.max_epoch * train_data.num_batches + args.world_size - 1) // args.world_size
@@ -302,7 +305,8 @@ if __name__ == '__main__':
   if args.fp16:
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
-  wandb.watch(lm_net, log_freq=100)
+  if args.rank == 0: 
+    wandb.watch(lm_net, log_freq=100)
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
