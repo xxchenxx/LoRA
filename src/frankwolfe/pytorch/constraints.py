@@ -163,6 +163,7 @@ def create_k_sparse_constraints(model, K=1, K_frac=None, value=300, mode='initia
         elif mode == 'diameter':
             constraint = KSparsePolytope(n, K=real_K, diameter=value, radius=None)
         elif mode == 'initialization':
+            print(init_norms)
             diameter = 2.0 * value * init_norms[param.shape]
             constraint = KSparsePolytope(n, K=real_K, diameter=diameter, radius=None)
         else:
