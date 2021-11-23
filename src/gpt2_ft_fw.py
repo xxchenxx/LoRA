@@ -304,14 +304,15 @@ if __name__ == '__main__':
   scheduler = create_optimizer_scheduler(optimizer, args)
   if args.fp16:
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
+  if args.init_checkpoint is not None:
+    print('loading model pretrained weight.')
+    lm_net.load_weight(torch.load(args.init_checkpoint))  
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
   if args.rank == 0: 
     wandb.watch(lm_net, log_freq=100)
   
-  if args.init_checkpoint is not None:
-    print('loading model pretrained weight.')
-    lm_net.load_weight(torch.load(args.init_checkpoint))  
-    
+  
+
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
