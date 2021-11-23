@@ -8,6 +8,7 @@ import random
 torch.set_printoptions(threshold=100000)
 
 import numpy as np
+import wandb
 
 from gpu import add_gpu_params, parse_gpu, distributed_opt, distributed_gather, distributed_sync, cleanup
 from optimizer import create_adam_optimizer, create_optimizer_scheduler, add_optimizer_params, create_adam_optimizer_from_args, create_sfw_optimizer_from_args, create_adagradsfw_optimizer_from_args
@@ -160,7 +161,9 @@ def evaluate(model, valid_loader, args):
       _lm_logits, _loss = model(_input, lm_labels=_target, lm_mask=_msk) 
       loss = _loss.mean() 
       
+      
       avg_lm_loss.update(loss.item())
+      wandb.log({"train/train_loss": loss.item().data.cpu().numpy()}, step=train_step)
 
       if idx % 100 == 0:
         print('eval samples:', idx, 'loss:', loss.float())
@@ -201,7 +204,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
                 '| ms/batch {:5.2f} | loss {:5.2f} | avg loss {:5.2f} | ppl {:5.2f}'.format(
                 epoch, train_step, idx + 1, optimizer.param_groups[0]['lr'], 
                 elapsed * 1000 / args.log_interval, avg_lm_loss.val, avg_lm_loss.avg, math.exp(avg_lm_loss.avg)) 
-
+      wandb.log({"train/avg_train_loss": avg_lm_loss.avg}, step=train_step)
       if args.rank == 0: 
         print(log_str)
       log_start_time = time.time()
@@ -219,6 +222,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
       eval_start_time = time.time()
 
       valid_loss, valid_ppl = evaluate(model, valid_loader, args)
+      wandb.log({"val/avg_eval_loss": valid_loss}, step=train_step)
 
       if best_val_ppl is None or valid_ppl < best_val_ppl:
         best_val_ppl = valid_ppl
@@ -282,28 +286,13 @@ if __name__ == '__main__':
 
   lm_net = lm_net.cuda()
   trainable = 0
-  if args.lora_dim == 0:
-    optimizer = create_adam_optimizer_from_args(lm_net, args)
-    # create_adam_optimizer(lm_net, args.lr, args.weight_decay, correct_bias=True, adam_epislon=1.0e-6, no_decay_bias=args.no_decay_bias)
-  else:
-    for n, p in lm_net.named_parameters():
-      if 'adapter' in n:
-        print(f'{n}, shape: {p.shape}')
-        trainable += p.numel()
-      else:
-        p.requires_grad = False
+  
+  optimizer = create_sfw_optimizer_from_args(lm_net, args)
+  constraint = constraints.create_k_sparse_constraints(lm_net, K=args.K, K_frac=args.K_frac,value=args.value, mode='initialization')
+  constraints.make_feasible(lm_net, constraint)
 
-    optimizer_grouped_parameters = [
-        {
-            "params": [p for n, p in lm_net.named_parameters() if 'adapter' in n],
-        }
-    ]
-
-    print(trainable)
-    optimizer = create_sfw_optimizer_from_args(None, args, grouped_parameters=optimizer_grouped_parameters)
-    constraint = constraints.create_k_sparse_constraints(lm_net, K=args.K, K_frac=args.K_frac, value=args.value, mode='initialization')
-    constraints.make_feasible(lm_net, constraint)
-    #None, args.lr, args.weight_decay, optimizer_grouped_parameters=optimizer_grouped_parameters, correct_bias=True, adam_epislon=1.0e-6)
+  wandb.init(project=f"sfw_lora", entity="xxchen", name=f"K{args.K}_K_frac{args.K_frac}_value{args.args.value}_{hex(int(time.time()))[2:]}")
+  wandb.config.update({'K': args.K, 'K_frac': args.K_frac, 'value': args.value})
 
   if args.max_step is None:
     args.max_step = (args.max_epoch * train_data.num_batches + args.world_size - 1) // args.world_size
@@ -313,7 +302,7 @@ if __name__ == '__main__':
   if args.fp16:
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
-
+  wandb.watch(lm_net, log_freq=100)
   try:
     train_step = 0
     for epoch in itertools.count(start=1):
