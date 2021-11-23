@@ -145,6 +145,7 @@ def create_k_sparse_constraints(model, K=1, K_frac=None, value=300, mode='initia
                             None))]:
                     param = getattr(layer, param_type)
                     shape = param.shape
+                    n = param.numel()
 
                     avg_norm = get_avg_init_norm(layer, param_type=param_type, ord=2)
                     if avg_norm == 0.0:
