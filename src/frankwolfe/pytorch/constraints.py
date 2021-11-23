@@ -79,7 +79,7 @@ def make_feasible(model, constraints):
         if hasattr(layer, 'reset_parameters'):
             for param_type in [entry for entry in ['weight', 'bias'] if (hasattr(layer, entry) and type(getattr(layer, entry)) != type(None))]:
                 param = getattr(layer, param_type)
-                print(param)
+                #print(param)
                 constraint = constraints[count]
                 param.copy_(constraint.shift_inside(param))
                 count += 1
