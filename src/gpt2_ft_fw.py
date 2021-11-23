@@ -163,8 +163,6 @@ def evaluate(model, valid_loader, args, train_step):
       
       
       avg_lm_loss.update(loss.item())
-      if args.rank == 0:
-        wandb.log({"val/val_loss": loss.item()}, step=train_step)
 
       if idx % 100 == 0:
         print('eval samples:', idx, 'loss:', loss.float())
