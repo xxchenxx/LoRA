@@ -143,7 +143,7 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True)
   if _schedule is not None:
     _schedule.step()
 
-def evaluate(model, valid_loader, args):
+def evaluate(model, valid_loader, args, train_step):
   model.eval()
   total_loss = 0.
   start_time = time.time()
@@ -223,7 +223,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     if train_step % args.eval_interval == 0:
       eval_start_time = time.time()
 
-      valid_loss, valid_ppl = evaluate(model, valid_loader, args)
+      valid_loss, valid_ppl = evaluate(model, valid_loader, args, train_step)
       if args.rank == 0: 
         wandb.log({"val/avg_eval_loss": valid_loss}, step=train_step)
 
