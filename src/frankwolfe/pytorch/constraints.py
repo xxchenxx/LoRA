@@ -140,6 +140,7 @@ def create_k_sparse_constraints(model, K=1, K_frac=None, value=300, mode='initia
     if mode == 'initialization':
         for name, layer in model.named_modules():
             #if 'adapter' in name:
+            if hasattr(layer, 'reset_parameters'):
                 for param_type in [entry for entry in ['weight', 'bias'] if (hasattr(layer, entry) and
                                                                              type(getattr(layer, entry)) != type(
                             None))]:
