@@ -79,6 +79,7 @@ def make_feasible(model, constraints):
         if hasattr(layer, 'reset_parameters'):
             for param_type in [entry for entry in ['weight', 'bias'] if (hasattr(layer, entry) and type(getattr(layer, entry)) != type(None))]:
                 param = getattr(layer, param_type)
+                print(param)
                 constraint = constraints[count]
                 param.copy_(constraint.shift_inside(param))
                 count += 1
@@ -110,23 +111,17 @@ def create_lp_constraints(model, ord=2, value=300, mode='initialization'):
                         # Catch unlikely case that weight/bias is 0-initialized (e.g. BatchNorm does this)
                         avg_norm = 1.0
                     init_norms[shape] = avg_norm
+                    if mode == 'radius':
+                        constraint = LpBall(n, ord=ord, diameter=None, radius=value)
+                    elif mode == 'diameter':
+                        constraint = LpBall(n, ord=ord, diameter=value, radius=None)
+                    elif mode == 'initialization':
+                        diameter = 2.0 * value * init_norms[param.shape]
+                        constraint = LpBall(n, ord=ord, diameter=diameter, radius=None)
+                    else:
+                        raise ValueError(f"Unknown mode {mode}")
+                    constraints.append(constraint)
 
-    for layer in model.modules():
-        if hasattr(layer, 'reset_parameters'):
-            for param_type in [entry for entry in ['weight', 'bias'] if (hasattr(layer, entry) and
-                type(getattr(layer, entry)) != type(None))]:
-                param = getattr(layer, param_type)
-                n = param.numel()
-                if mode == 'radius':
-                    constraint = LpBall(n, ord=ord, diameter=None, radius=value)
-                elif mode == 'diameter':
-                    constraint = LpBall(n, ord=ord, diameter=value, radius=None)
-                elif mode == 'initialization':
-                    diameter = 2.0 * value * init_norms[param.shape]
-                    constraint = LpBall(n, ord=ord, diameter=diameter, radius=None)
-                else:
-                    raise ValueError(f"Unknown mode {mode}")
-                constraints.append(constraint)
     return constraints
 
 
