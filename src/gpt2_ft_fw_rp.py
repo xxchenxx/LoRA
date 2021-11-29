@@ -87,6 +87,8 @@ parser.add_argument('--K', type=int, default=1000, help='eval per number of epoc
 parser.add_argument('--K_frac', type=float, default=0.05, help='eval per number of epochs.')
 parser.add_argument('--value', type=float, default=15, help='eval per number of epochs.')
 
+parser.add_argument('--sparsity', type=float, default=0.5, help='sparsity.')
+
 # influence model, calculate the influence score between two samples.
 def print_args(args):
   if args.rank == 0:
@@ -289,7 +291,7 @@ if __name__ == '__main__':
 
   import torch.nn.utils.prune as prune
 
-  prune.global_unstructured(lm_net.parameters(), pruning_method=prune.RandomUnstructured, amount=0.5)
+  prune.global_unstructured(lm_net.parameters(), pruning_method=prune.RandomUnstructured, amount=args.sparsity)
   trainable = 0
   
   optimizer = create_sfw_optimizer_from_args(lm_net, args)
