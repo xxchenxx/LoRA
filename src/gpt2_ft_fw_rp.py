@@ -307,7 +307,7 @@ if __name__ == '__main__':
         amount=px,
     )
 
-  prune.global_unstructured(lm_net.parameters(), pruning_method=prune.RandomUnstructured, amount=args.sparsity)
+  pruning_model(lm_net, args.sparsity)
   trainable = 0
   
   optimizer = create_sfw_optimizer_from_args(lm_net, args)
