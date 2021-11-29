@@ -290,6 +290,22 @@ if __name__ == '__main__':
   lm_net = lm_net.cuda()
 
   import torch.nn.utils.prune as prune
+  def pruning_model(model, px, conv1=False):
+
+    print('start unstructured pruning for all conv layers')
+    parameters_to_prune =[]
+    for name, m in model.named_modules():
+        if 'c_attn' in name:
+            parameters_to_prune.append((m,'weight'))
+
+
+    parameters_to_prune = tuple(parameters_to_prune)
+
+    prune.global_unstructured(
+        parameters_to_prune,
+        pruning_method=prune.RandomUnstructured,
+        amount=px,
+    )
 
   prune.global_unstructured(lm_net.parameters(), pruning_method=prune.RandomUnstructured, amount=args.sparsity)
   trainable = 0
