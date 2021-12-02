@@ -138,6 +138,7 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True,
     masks = {}
     # calculate score |g * theta|
     for name, m in _model.named_modules():
+      if getattr(m, 'weight'):
         scores[name] = torch.clone(m.weight.grad.data).detach().abs_()
     # normalize score
     all_scores = torch.cat([torch.flatten(v) for v in scores.values()])
@@ -147,6 +148,7 @@ def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True,
         masks[name + ".weight_mask"] = mask
     
     for name, m in _model.named_modules():
+      if getattr(m, 'weight'):
         prune.custom_from_mask(m, 'weight', masks[name + ".weight_mask"])
     
   if is_update:
