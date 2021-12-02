@@ -126,14 +126,14 @@ class AverageMeter(object):
     self.count += n
     self.avg = self.sum / self.count
 
-def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True, prune=False):
+def optimizer_step(_loss, _optimizer, _model, _schedule, args, is_update = True, to_prune=False):
   if args.fp16:
     with amp.scale_loss(_loss, _optimizer) as _scaled_loss:
       _scaled_loss.backward()
   else:
     _loss.backward()
   
-  if prune:
+  if to_prune:
     scores = {}
     masks = {}
     # calculate score |g * theta|
@@ -215,7 +215,7 @@ def train_validate(model, optimizer, scheduler, train_loader, valid_loader, args
     train_step += 1
     is_update = True if train_step % args.grad_acc == 0 else False
     avg_lm_loss.update(_lm_loss.item())
-    optimizer_step(_lm_loss/(args.grad_acc), optimizer, model, scheduler, args, is_update=is_update, prune=(train_step==1))
+    optimizer_step(_lm_loss/(args.grad_acc), optimizer, model, scheduler, args, is_update=is_update, to_prune=(train_step==1))
     
     if train_step % args.log_interval == 0: 
       elapsed = time.time() - log_start_time
