@@ -306,9 +306,6 @@ if __name__ == '__main__':
 
   lm_net = lm_net.cuda()
 
-  
-
-  pruning_model(lm_net, args.sparsity)
   trainable = 0
   
   optimizer = create_sfw_optimizer_from_args(lm_net, args)
