@@ -114,18 +114,9 @@ class Attention(nn.Module):
             nn.init.normal_(self.v_proj_adapter1.weight, std=0.02)
             self.v_proj_adapter2 = nn.Linear(self.lora_attn_dim, nx, bias=False)
             self.v_proj_adapter2.weight.data.zero_()
-            
-            
 
-            self.S_Q_embedding = nn.Linear(1024, 1024, bias=False)
-            self.S_V_embedding = nn.Linear(1024, 1024, bias=False)
-            mask = torch.zeros(1024,1024)
-            self.register_parameter("S_Q", nn.Parameter(mask))
-            mask = torch.zeros(1024,1024)
-            self.register_parameter("S_V", nn.Parameter(mask))
-            self.S_Q.requires_grad = False
-            self.S_V.requires_grad = False
-
+            self.S_Q = nn.Linear(1024, 1024, bias=False)
+            self.S_V = nn.Linear(1024, 1024, bias=False)
             self.q_moe_adapter1 = None
             self.v_moe_adapter1 = None
 
@@ -171,7 +162,7 @@ class Attention(nn.Module):
         else:
             return x.permute(0, 2, 1, 3).contiguous()  # (batch, head, seq_length, head_features)
 
-    def adapter_forward(self, x, weight_1, weight_2, g_weight=None, embedding=None, mask=None):
+    def adapter_forward(self, x, weight_1, weight_2, g_weight=None, embedding=None):
         scale_factor = self.lora_attn_alpha / self.lora_attn_dim
         result = torch.matmul(x, weight_1.type_as(x).T)
 
@@ -195,7 +186,7 @@ class Attention(nn.Module):
             result = result.view(result.shape[0], result.shape[1], result.shape[2] // self.config.lora_moe_group, self.config.lora_moe_group) * g.unsqueeze(-1)
             result = result.view(result.shape[0], result.shape[1], -1)
                      
-        return (torch.matmul(result, weight_2.type_as(x).T) + torch.matmul(x, embedding * mask)) * scale_factor 
+        return (torch.matmul(result, weight_2.type_as(x).T) + embedding(x)) * scale_factor 
 
 
     # two level attention here.
@@ -212,9 +203,9 @@ class Attention(nn.Module):
             if self.lora_dropout is not None:
                 lora_input = self.lora_dropout(lora_input)
 
-            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1, embedding=self.S_Q_embedding.weight, mask=self.S_Q)
+            query_delta = self.adapter_forward(lora_input, self.q_proj_adapter1.weight, self.q_proj_adapter2.weight, g_weight=self.q_moe_adapter1, embedding=self.S_Q)
 
-            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1, embedding=self.S_V_embedding.weight, mask=self.S_V)
+            value_delta = self.adapter_forward(lora_input, self.v_proj_adapter1.weight, self.v_proj_adapter2.weight, g_weight=self.v_moe_adapter1, embedding=self.S_V)
             
             query = query.contiguous() + query_delta
             value = value.contiguous() + value_delta
@@ -928,21 +919,15 @@ class GPT2LMModel(nn.Module):
         if isinstance(module, nn.Linear) and module.bias is not None:
             module.bias.data.zero_()
 
-    def load_weight(self, state_dict):
+    def load_weight(self, state_dict, beam=False):
 
         if 'model_state_dict' in state_dict:
             state_dict = state_dict['model_state_dict']
 
-        for key in list(state_dict.keys()):
-            if 'orig' in key:
-                print(key)
-                state_dict[key[:-5]] = state_dict[key[:-5] + '_mask'] * state_dict[key]
-                del state_dict[key]
-                del state_dict[key[:-5] + "_mask"]
-
         old_keys = []
         new_keys = []
         for key in state_dict.keys():
+            print(key)
             new_key = None
             if key.endswith(".g"):
                 new_key = key[:-2] + ".weight"
