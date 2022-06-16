@@ -355,9 +355,11 @@ if __name__ == '__main__':
 					
 			q, _ = torch.kthvalue(S_Q.abs().view(-1), S_Q.numel() - args.num_sparse + 1)
 			S_Q = (S_Q.abs() >= q).float().cuda()
+
 			#print(S_Q)
 			v, _ = torch.kthvalue(S_V.abs().view(-1), S_V.numel() - args.num_sparse + 1)
 			S_V = (S_V.abs() >= v).float().cuda()
+
 			torch.distributed.broadcast(S_Q, 0)
 			torch.distributed.barrier()
 			torch.distributed.broadcast(S_V, 0)
