@@ -23,7 +23,7 @@ NCCL_P2P_DISABLE=1 CUDA_VISIBLE_DEVICES=5 nohup python -m torch.distributed.laun
 
 
 
-CUDA_VISIBLE_DEVICES=0 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8283 src/gpt2_beam.py --data ./data/e2e/test.jsonl --batch_size 1 --seq_len 512 --eval_len 64 --model_card gpt2.md --init_checkpoint ./trained_models/GPT2_M_ours_e2e_rank_4_1/model.105155.pt --platform local --lora_dim 4 --lora_alpha 32 --beam 10 --length_penalty 0.8 --no_repeat_ngram_size 4 --repetition_penalty 1.0 --eos_token_id 628 --work_dir ./trained_models/GPT2_M_ours_e2e_rank_4_1 --output_file predict.105155.b10p08.jsonl > 1.out &
+CUDA_VISIBLE_DEVICES=0 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8283 src/gpt2_beam.py --data ./data/e2e/test.jsonl --batch_size 1 --seq_len 512 --eval_len 64 --model_card gpt2.md --init_checkpoint ./trained_models/GPT2_M_ours_e2e_rank_4_1/model.105155.pt --platform local --lora_dim 4 --lora_alpha 32 --beam 10 --length_penalty 0.8 --no_repeat_ngram_size 4 --repetition_penalty 1.0 --eos_token_id 628 --work_dir ./trained_models/GPT2_M_ours_e2e_rank_4_1 --output_file predict.105155.b10p08.jsonl --prune > 1.out &
 
 CUDA_VISIBLE_DEVICES=1 nohup python -m torch.distributed.launch --nproc_per_node=1 --master_port=8284 src/gpt2_beam.py --data ./data/e2e/test.jsonl --batch_size 1 --seq_len 512 --eval_len 64 --model_card gpt2.md --init_checkpoint ./trained_models/GPT2_M_ours_e2e_rank_4_2/model.105155.pt --platform local --lora_dim 4 --lora_alpha 32 --beam 10 --length_penalty 0.8 --no_repeat_ngram_size 4 --repetition_penalty 1.0 --eos_token_id 628 --work_dir ./trained_models/GPT2_M_ours_e2e_rank_4_2 --output_file predict.105155.b10p08.jsonl > 2.out &
 
