@@ -311,15 +311,18 @@ if __name__ == '__main__':
   import copy
 
   checkpoint = torch.load(args.checkpoint)['model_state_dict']
-  lm_net.load_state_dict(checkpoint)
+  
   original_state_dict = copy.deepcopy(checkpoint)
-  for name, module in lm_net.named_modules():
-    
+  for name, module in lm_net.named_modules(): 
     if isinstance(module, Attention):
       prune.custom_from_mask(module.S_Q, 'weight', checkpoint[name + ".S_Q.weight_mask"])
       module.S_Q.weight_orig.data = checkpoint[name + ".S_Q.weight_orig"]
       prune.custom_from_mask(module.S_V, 'weight', checkpoint[name + ".S_V.weight_mask"])
       module.S_V.weight_orig.data = checkpoint[name + ".S_V.weight_orig"]
+
+  lm_net.load_state_dict(checkpoint)
+  for name, module in lm_net.named_modules(): 
+    if isinstance(module, Attention):
       weight = module.c_attn.weight.data
       weight[:, :module.split_size] = (module.q_proj_adapter2.weight.data @ module.q_proj_adapter1.weight) + module.S_Q.weight_orig * module.S_Q.weight_mask
       weight[:, module.split_size:2*module.split_size] = 1e10
