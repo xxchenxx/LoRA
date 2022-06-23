@@ -311,7 +311,7 @@ if __name__ == '__main__':
   import copy
 
   checkpoint = torch.load(args.checkpoint)['model_state_dict']
-
+  lm_net.load_state_dict(checkpoint)
   original_state_dict = copy.deepcopy(checkpoint)
   for name, module in lm_net.named_modules():
     
@@ -348,14 +348,11 @@ if __name__ == '__main__':
   # prune 
   pruning_model(lm_net, args.pruning_ratio, ['c_attn'])
   pruning_model(lm_net, args.pruning_ratio, ['c_fc', 'c_proj'])
-  current_state_dict = lm_net.state_dict()
-  for name in list(original_state_dict.keys()):
-    if 'c_attn' in name and 'weight' in name:
-      original_state_dict[name + "_orig"] = copy.deepcopy(original_state_dict[name])
-      original_state_dict[name + "_mask"] = current_state_dict[name + "_mask"]
-      del original_state_dict[name]
-  print(original_state_dict.keys())
-  lm_net.load_state_dict(original_state_dict)
+
+  for name, module in lm_net.named_modules():
+    if isinstance(module, Attention):
+      module.c_attn.weight_orig.data = checkpoint[name + '.c_attn.weight']
+
 
   def check_sparsity(model, conv1=True):
     
