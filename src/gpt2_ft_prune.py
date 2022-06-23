@@ -312,7 +312,7 @@ if __name__ == '__main__':
 
   checkpoint = torch.load(args.checkpoint)['model_state_dict']
 
-  original_state_dict = copy.deepcopy(lm_net.state_dict())
+  original_state_dict = copy.deepcopy(checkpoint)
   for name, module in lm_net.named_modules():
     
     if isinstance(module, Attention):
