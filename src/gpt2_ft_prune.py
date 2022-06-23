@@ -321,7 +321,7 @@ if __name__ == '__main__':
       prune.custom_from_mask(module.S_V, 'weight', checkpoint[name + ".S_V.weight_mask"])
       module.S_V.weight_orig.data = checkpoint[name + ".S_V.weight_orig"]
       weight = module.c_attn.weight.data
-      weight[:, :module.split_size] = (module.q_proj_adapter2.weight.data @ module.q_proj_adapter1.weight) + module.q_proj_adapter2 + module.S_Q.weight_orig * module.S_Q.weight_mask
+      weight[:, :module.split_size] = (module.q_proj_adapter2.weight.data @ module.q_proj_adapter1.weight) + module.S_Q.weight_orig * module.S_Q.weight_mask
       weight[:, module.split_size:2*module.split_size] = 1e10
       weight[:, 2*module.split_size:] = (module.v_proj_adapter2.weight.data @ module.v_proj_adapter1.weight) + module.S_V.weight_orig * module.S_V.weight_mask
       module.c_attn.weight.data = weight
