@@ -316,9 +316,9 @@ if __name__ == '__main__':
   for name, module in lm_net.named_modules():
     
     if isinstance(module, Attention):
-      prune.custom_from_mask(module.S_Q, checkpoint[name + ".S_Q.weight_mask"])
+      prune.custom_from_mask(module.S_Q, 'weight', checkpoint[name + ".S_Q.weight_mask"])
       module.S_Q.weight_orig.data = checkpoint[name + ".S_Q.weight_orig"]
-      prune.custom_from_mask(module.S_V, checkpoint[name + ".S_V.weight_mask"])
+      prune.custom_from_mask(module.S_V, 'weight', checkpoint[name + ".S_V.weight_mask"])
       module.S_V.weight_orig.data = checkpoint[name + ".S_V.weight_orig"]
       weight = module.c_attn.weight.data
       weight[:, :module.split_size] = (module.q_proj_adapter2.weight.data @ module.q_proj_adapter1.weight) + module.q_proj_adapter2 + module.S_Q.weight_orig * module.S_Q.weight_mask
