@@ -82,7 +82,8 @@ parser.add_argument('--compress_step', type=int, default=1000, help='compress_st
 
 parser.add_argument('--lambda_s', type=float, default=0.01, help='lambda_s')
 parser.add_argument('--num_sparse', type=int, default=64, help='compress_step')
-parser.add_argument('--pruning_ratio', type=float, default=0.5, help='lambda_s')
+parser.add_argument('--pruning_ratio', type=float, default=0.3, help='lambda_s')
+parser.add_argument('--checkpoint', type=str)
 
 
 # influence model, calculate the influence score between two samples.
@@ -308,25 +309,33 @@ if __name__ == '__main__':
     lm_net, optimizer = amp.initialize(lm_net, optimizer, opt_level="O1")
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
   import copy
+
+  checkpoint = torch.load(args.checkpoint)
+
   original_state_dict = copy.deepcopy(lm_net.state_dict())
 
   for name, module in lm_net.named_modules():
     
     if isinstance(module, Attention):
+      prune.custom_from_mask(module.S_Q, checkpoint[name + "S_Q.weight_mask"])
+      module.S_Q.weight_orig.data = checkpoint[name + "S_Q.weight_orig"]
+      prune.custom_from_mask(module.S_V, checkpoint[name + "S_V.weight_mask"])
+      module.S_V.weight_orig.data = checkpoint[name + "S_V.weight_orig"]
       weight = module.c_attn.weight.data
-      weight[:, :module.split_size] = weight[:, :module.split_size] + (module.q_proj_adapter2.weight.data @ module.q_proj_adapter1.weight)
-      weight[:, 2*module.split_size:] = weight[:, 2*module.split_size:] + (module.v_proj_adapter2.weight.data @ module.v_proj_adapter1.weight)
-      
+      weight[:, :module.split_size] = (module.q_proj_adapter2.weight.data @ module.q_proj_adapter1.weight) + module.q_proj_adapter2 + module.S_Q.weight_orig * module.S_Q.weight_mask
+      weight[:, module.split_size:2*module.split_size] = 1e10
+      weight[:, 2*module.split_size:] = (module.v_proj_adapter2.weight.data @ module.v_proj_adapter1.weight) + module.S_V.weight_orig * module.S_V.weight_mask
       module.c_attn.weight.data = weight
 
 
-  def pruning_model(model, px):
+  def pruning_model(model, px, groups):
         print('start unstructured pruning for all linear layers')
         parameters_to_prune =[]
         for name, m in model.named_modules():
-            if 'c_attn' in name:
-                    print(f"prune {name}")
-                    parameters_to_prune.append((m, "weight"))
+            flags = [g in name for g in groups]
+            if any(flags):
+              print(f"prune {name}")
+              parameters_to_prune.append((m, "weight"))
 
 
         parameters_to_prune = tuple(parameters_to_prune)
@@ -338,7 +347,8 @@ if __name__ == '__main__':
         )
     
   # prune 
-  pruning_model(lm_net, args.pruning_ratio)
+  pruning_model(lm_net, args.pruning_ratio, ['c_attn'])
+  pruning_model(lm_net, args.pruning_ratio, ['c_fc', 'c_proj'])
   current_state_dict = lm_net.state_dict()
   for name in list(original_state_dict.keys()):
     if 'c_attn' in name and 'weight' in name:

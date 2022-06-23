@@ -66,7 +66,7 @@ CUDA_VISIBLE_DEVICES=7 nohup python -m torch.distributed.launch --nproc_per_node
 
 python src/gpt2_decode.py \
         --vocab ./vocab \
-        --sample_file ./trained_models/GPT2_M_dart_rank_2_2/predict.156650.b10p09.jsonl \
+        --sample_file ./trained_models/GPT2_M_dart_rank_2_1/predict.156650.b10p09.jsonl \
         --input_file ./data/dart/test_formatted.jsonl \
         --ref_type dart \
         --ref_num 6 \
