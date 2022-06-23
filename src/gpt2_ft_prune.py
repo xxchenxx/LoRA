@@ -310,10 +310,9 @@ if __name__ == '__main__':
   lm_net, optimizer = distributed_opt(args, lm_net, optimizer, grad_acc=args.grad_acc)
   import copy
 
-  checkpoint = torch.load(args.checkpoint)
+  checkpoint = torch.load(args.checkpoint)['model_state_dict']
 
   original_state_dict = copy.deepcopy(lm_net.state_dict())
-
   for name, module in lm_net.named_modules():
     
     if isinstance(module, Attention):
