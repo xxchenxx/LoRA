@@ -376,6 +376,9 @@ if __name__ == '__main__':
 			if isinstance(module, Attention):
 				prune.custom_from_mask(module.S_Q, 'weight', checkpoint['model_state_dict']['module.' + name + ".S_Q.weight_mask"])
 				prune.custom_from_mask(module.S_V, 'weight', checkpoint['model_state_dict']['module.' + name + ".S_V.weight_mask"])
+			elif 'c_attn' in name or 'c_proj' in name or 'c_fc' in name:
+				prune.custom_from_mask(module, 'weight', checkpoint['model_state_dict']['module.' + name + ".weight_mask"])
+			
 	if args.init_checkpoint is not None:
 		print('loading model pretrained weight.')
 		cp = torch.load(args.init_checkpoint, map_location=torch.device('cpu'))
